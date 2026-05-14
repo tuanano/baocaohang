@@ -802,8 +802,8 @@ export default function CreatePreReportDetail({
                   </span>
                   <span className="text-[#00529C] font-bold text-[16px]">
                     {mode === "create"
-                      ? "DRAFT_2026_0423_001"
-                      : "DNBC_2026_0006789"}
+                      ? "DNBC26_0000001"
+                      : "DNBC26_0123456"}
                   </span>
                 </div>
 
@@ -811,8 +811,12 @@ export default function CreatePreReportDetail({
                   <div className="flex items-center gap-2">
                     <span className="text-[#64748B]">Người tạo đơn</span>
                     <span className="font-bold text-[#334155]">
-                      {mode === "create" ? "admin" : "thaohh5"}
+                       admin
                     </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[#64748B]">Trung tâm kinh doanh</span>
+                    <span className="font-bold text-[#334155]">FHO Other HN</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-[#64748B]">Ngày tạo</span>
@@ -946,9 +950,8 @@ export default function CreatePreReportDetail({
                 <InfoView label="Hãng" value="Apple" />
                 <InfoView label="Hình thức báo cáo" value="Báo cáo trước" />
                 <InfoView
-                  label="Phiếu đề nghị XKNB"
-                  value="XK25_0014767"
-                  isLink
+                  label="Trung tâm kinh doanh"
+                  value="FHO Other HN"
                 />
                 <InfoView label="Ngày hạch toán" value="04/07/2025" />
 

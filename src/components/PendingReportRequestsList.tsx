@@ -17,7 +17,8 @@ interface ReportRequest {
   code: string;
   period: string;
   method: string;
-  xknb?: string;
+  brand: string;
+  businessCenter: string;
   creator: string;
   status: "confirmed" | "bd_pending" | "pm_pending" | "draft" | "var_pending";
 }
@@ -41,69 +42,81 @@ const statusMap = {
 const mockRequests: ReportRequest[] = [
   {
     id: "2",
-    code: "DNBC-002",
+    code: "DNBC26_0000002",
     period: "01/04/2026 - 30/04/2026",
     method: "Báo cáo trước",
-    xknb: "XK25_0014768",
+    brand: "SAMSUNG",
+    businessCenter: "FHO Other HCM",
     creator: "Trần Xuân B",
     status: "bd_pending",
   },
   {
     id: "3",
-    code: "DNBC-003",
+    code: "DNBC25_0000123",
     period: "01/05/2025 - 30/05/2025",
     method: "Báo cáo trước",
-    xknb: "XK25_0014769",
+    brand: "ASUS",
+    businessCenter: "FHO Other HN",
     creator: "Nguyễn Văn A",
     status: "pm_pending",
   },
   {
     id: "6",
-    code: "DNBC-006",
+    code: "DNBC25_0000126",
     period: "01/08/2025 - 30/08/2025",
     method: "Báo cáo sau",
+    brand: "LENOVO",
+    businessCenter: "FHO Other HCM",
     creator: "Trần Xuân B",
     status: "bd_pending",
   },
   {
     id: "8",
-    code: "DNBC-008",
+    code: "DNBC25_0000128",
     period: "01/10/2025 - 30/10/2025",
     method: "Báo cáo sau",
+    brand: "AMD",
+    businessCenter: "FHO Other HCM",
     creator: "Trần Xuân B",
     status: "bd_pending",
   },
   {
     id: "10",
-    code: "DNBC-010",
+    code: "DNBC25_0000130",
     period: "01/12/2025 - 30/12/2025",
     method: "Báo cáo sau",
+    brand: "SAMSUNG",
+    businessCenter: "FHO Other HCM",
     creator: "Trần Xuân B",
     status: "bd_pending",
   },
   {
     id: "11",
-    code: "DNBC-011",
+    code: "DNBC26_0000003",
     period: "01/01/2026 - 31/01/2026",
     method: "Báo cáo trước",
-    xknb: "XK25_0014771",
+    brand: "APPLE",
+    businessCenter: "FHO Other HN",
     creator: "Lê Thị C",
     status: "bd_pending",
   },
   {
     id: "12",
-    code: "DNBC-012",
+    code: "DNBC26_0000004",
     period: "01/02/2026 - 28/02/2026",
     method: "Báo cáo sau",
+    brand: "DELL",
+    businessCenter: "FHO Other HCM",
     creator: "Phạm Văn D",
     status: "pm_pending",
   },
   {
     id: "13",
-    code: "DNBC-013",
+    code: "DNBC26_0000005",
     period: "01/03/2026 - 31/03/2026",
     method: "Báo cáo trước",
-    xknb: "XK25_0014772",
+    brand: "HP",
+    businessCenter: "FHO Other HN",
     creator: "Hoàng Văn E",
     status: "bd_pending",
   },
@@ -375,8 +388,11 @@ export default function PendingReportRequestsList({
                 <th className="px-4 py-4 text-[13px] font-semibold text-[#002D56] font-sans tracking-tight whitespace-nowrap">
                   Hình thức báo cáo
                 </th>
-                <th className="px-4 py-4 text-[13px] font-semibold text-[#002D56] font-sans w-48 tracking-tight whitespace-nowrap">
-                  Mã XKNB
+                <th className="px-4 py-4 text-[13px] font-semibold text-[#002D56] w-40 font-sans tracking-tight whitespace-nowrap">
+                  Hãng
+                </th>
+                <th className="px-4 py-4 text-[13px] font-semibold text-[#002D56] w-56 font-sans tracking-tight whitespace-nowrap">
+                  Trung tâm kinh doanh
                 </th>
                 <th className="px-4 py-4 text-[13px] font-semibold text-[#002D56] w-56 font-sans tracking-tight whitespace-nowrap">
                   Người tạo
@@ -416,7 +432,12 @@ export default function PendingReportRequestsList({
                       {req.method}
                     </td>
                     <td className="px-4 py-3.5 text-[13px] text-gray-700 font-medium">
-                      {req.xknb || "---"}
+                      <span className="px-2 py-0.5 bg-blue-50 text-[#00529C] rounded border border-blue-100 font-bold text-[11px]">
+                        {req.brand}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3.5 text-[13px] text-gray-700 font-medium whitespace-nowrap">
+                      {req.businessCenter}
                     </td>
                     <td className="px-4 py-3.5 text-[13px] text-gray-700 font-medium">
                       {req.creator}
@@ -433,7 +454,7 @@ export default function PendingReportRequestsList({
               ) : (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={8}
                     className="px-4 py-10 text-center text-gray-500 text-[14px]"
                   >
                     Không tìm thấy dữ liệu phù hợp

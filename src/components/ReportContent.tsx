@@ -56,6 +56,8 @@ export default function ReportContent({ brandReports, setBrandReports }: ReportC
     reportCode: "",
     fromDate: "",
     toDate: "",
+    company: [] as string[],
+    org: [] as string[],
     brand: [] as string[],
     reportType: "",
     tag: "",
@@ -72,6 +74,7 @@ export default function ReportContent({ brandReports, setBrandReports }: ReportC
     tag: "",
     warehouseType: "Kho báo cáo",
     company: [] as string[],
+    org: [] as string[],
     brand: [] as string[],
     productLine: [] as string[],
     productCode: [] as string[],
@@ -101,6 +104,8 @@ export default function ReportContent({ brandReports, setBrandReports }: ReportC
       reportCode: "",
       fromDate: "",
       toDate: "",
+      company: [] as string[],
+      org: [] as string[],
       brand: [] as string[],
       reportType: "",
       tag: "",
@@ -148,6 +153,7 @@ export default function ReportContent({ brandReports, setBrandReports }: ReportC
         tag: form.tag,
         warehouseType: form.warehouseType,
         company: form.company,
+        org: form.org,
         brand: form.brand,
         productLine: form.productLine,
         productCode: form.productCode,
@@ -198,6 +204,14 @@ export default function ReportContent({ brandReports, setBrandReports }: ReportC
           return item.brand.toLowerCase().includes(brandName);
         });
 
+      const matchesOrg = 
+        !filters.org?.length ||
+        (item.parameters?.org && filters.org.some(org => item.parameters?.org.includes(org)));
+
+      const matchesCompany = 
+        !filters.company?.length ||
+        (item.parameters?.company && filters.company.some(company => item.parameters?.company.includes(company)));
+
       const matchesStatus = !filters.status || item.status === filters.status;
       const matchesReportType =
         !filters.reportType || item.reportType === filters.reportType;
@@ -234,6 +248,8 @@ export default function ReportContent({ brandReports, setBrandReports }: ReportC
       return (
         matchesSearch &&
         matchesBrand &&
+        matchesOrg &&
+        matchesCompany &&
         matchesStatus &&
         matchesReportType &&
         matchesExporter &&
@@ -487,6 +503,14 @@ export default function ReportContent({ brandReports, setBrandReports }: ReportC
                     options={["Công ty A", "Công ty B", "Công ty C"]}
                   />
                   <FilterField
+                    label="ORG"
+                    placeholder="Chọn ORG"
+                    value={form.org}
+                    onChange={(val: string[]) => setForm({ ...form, org: val })}
+                    type="multiselect"
+                    options={["A80", "A77", "A82"]}
+                  />
+                  <FilterField
                     label="Hãng"
                     placeholder="Chọn hãng"
                     value={form.brand}
@@ -680,6 +704,26 @@ export default function ReportContent({ brandReports, setBrandReports }: ReportC
                       isDate
                     />
                   </div>
+                  <FilterField
+                    label="Công ty"
+                    placeholder="Tất cả công ty"
+                    value={filters.company}
+                    onChange={(val: string[]) =>
+                      setFilters({ ...filters, company: val })
+                    }
+                    type="multiselect"
+                    options={["Công ty A", "Công ty B", "Công ty C"]}
+                  />
+                  <FilterField
+                    label="ORG"
+                    placeholder="Tất cả ORG"
+                    value={filters.org}
+                    onChange={(val: string[]) =>
+                      setFilters({ ...filters, org: val })
+                    }
+                    type="multiselect"
+                    options={["A80", "A77", "A82"]}
+                  />
                   <FilterField
                     label="Hãng"
                     placeholder="Tất cả hãng"
@@ -1308,7 +1352,7 @@ export default function ReportContent({ brandReports, setBrandReports }: ReportC
                          {/* Default info */}
                          <div>
                            <label className="text-[12px] text-gray-500">Mã báo cáo</label>
-                           <p className="text-[13px] font-medium text-gray-900 mt-0.5">{record.reportCode}</p>
+                           <p className="text-[13px] font-bold text-[#00529C] mt-0.5 bg-blue-50 px-2 py-1 rounded border border-blue-100 inline-block">{record.reportCode}</p>
                          </div>
                          <div>
                            <label className="text-[12px] text-gray-500">Người xuất</label>
@@ -1319,7 +1363,7 @@ export default function ReportContent({ brandReports, setBrandReports }: ReportC
                          {/* Parameters */}
                          {!p ? (
                            <div className="col-span-2 text-gray-500 text-[13px] italic p-4 text-center">
-                              Không có dữ liệu tham số lưu trữ cho lệnh này.
+                               Không có dữ liệu tham số lưu trữ cho lệnh này.
                            </div>
                          ) : (
                            <>
@@ -1331,9 +1375,9 @@ export default function ReportContent({ brandReports, setBrandReports }: ReportC
                                 <label className="text-[12px] text-gray-500">Ngày giao dịch đến</label>
                                 <p className="text-[13px] font-medium text-gray-900 mt-0.5">{p.toDate || '--'}</p>
                               </div>
-                              <div>
+                              <div className="col-span-2">
                                 <label className="text-[12px] text-gray-500">Loại tham số báo cáo</label>
-                                <p className="text-[13px] font-medium text-gray-900 mt-0.5">{p.reportType || '--'}</p>
+                                <p className="text-[13px] font-medium text-gray-900 mt-0.5 p-2 bg-gray-50 rounded border border-gray-100">{p.reportType || '--'}</p>
                               </div>
                               <div>
                                 <label className="text-[12px] text-gray-500">Thẻ báo cáo</label>
@@ -1343,17 +1387,33 @@ export default function ReportContent({ brandReports, setBrandReports }: ReportC
                                 <label className="text-[12px] text-gray-500">Loại kho</label>
                                 <p className="text-[13px] font-medium text-gray-900 mt-0.5">{p.warehouseType || '--'}</p>
                               </div>
-                              <div>
+                              <div className="col-span-2">
                                 <label className="text-[12px] text-gray-500">Công ty</label>
                                 <p className="text-[13px] font-medium text-gray-900 mt-0.5">{p.company?.length ? p.company.join(', ') : 'Tất cả'}</p>
                               </div>
                               <div>
-                                <label className="text-[12px] text-gray-500">Hãng</label>
-                                <p className="text-[13px] font-medium text-gray-900 mt-0.5">{p.brand?.length ? p.brand.join(', ') : 'Tất cả'}</p>
+                                <label className="text-[12px] text-gray-500">ORG</label>
+                                <p className="text-[13px] font-medium text-gray-900 mt-0.5">{p.org?.length ? p.org.join(', ') : 'Tất cả'}</p>
                               </div>
                               <div>
+                                <label className="text-[12px] text-gray-500">Hãng</label>
+                                <div className="flex flex-wrap gap-1 mt-1">
+                                  {p.brand?.length ? p.brand.map(id => (
+                                    <span key={id} className="px-2 py-0.5 bg-blue-100 text-[#00529C] text-[11px] font-bold rounded border border-blue-200">
+                                      {BRANDS.find(b => b.id === id)?.name || id}
+                                    </span>
+                                  )) : <span className="text-[13px] text-gray-500">Tất cả</span>}
+                                </div>
+                              </div>
+                              <div className="col-span-2">
                                 <label className="text-[12px] text-gray-500">Dòng sản phẩm (PS)</label>
-                                <p className="text-[13px] font-medium text-gray-900 mt-0.5">{p.productLine?.length ? p.productLine.join(', ') : 'Tất cả'}</p>
+                                <div className="flex flex-wrap gap-1 mt-1">
+                                  {p.productLine?.length ? p.productLine.map(id => (
+                                    <span key={id} className="px-2 py-0.5 bg-orange-50 text-orange-700 text-[11px] font-bold rounded border border-orange-100">
+                                      {PRODUCT_LINES_PS.find(pl => pl.id === id)?.name || id}
+                                    </span>
+                                  )) : <span className="text-[13px] text-gray-500">Tất cả</span>}
+                                </div>
                               </div>
                               <div>
                                 <label className="text-[12px] text-gray-500">Mã hàng hóa</label>

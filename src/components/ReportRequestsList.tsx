@@ -18,7 +18,8 @@ interface ReportRequest {
   code: string;
   period: string;
   method: string;
-  xknb?: string;
+  brand: string;
+  businessCenter: string;
   creator: string;
   status: "confirmed" | "bd_pending" | "pm_pending" | "draft" | "var_pending";
 }
@@ -42,85 +43,101 @@ const statusMap = {
 const mockRequests: ReportRequest[] = [
   {
     id: "1",
-    code: "DNBC-001",
+    code: "DNBC26_0000001",
     period: "01/03/2026 - 30/03/2026",
     method: "Báo cáo trước",
-    xknb: "XK25_0014767",
+    brand: "APPLE",
+    businessCenter: "FHO Other HN",
     creator: "Nguyễn Văn A",
     status: "confirmed",
   },
   {
     id: "2",
-    code: "DNBC-002",
+    code: "DNBC26_0000002",
     period: "01/04/2026 - 30/04/2026",
     method: "Báo cáo trước",
-    xknb: "XK25_0014768",
+    brand: "SAMSUNG",
+    businessCenter: "FHO Other HCM",
     creator: "Trần Xuân B",
     status: "bd_pending",
   },
   {
     id: "3",
-    code: "DNBC-003",
+    code: "DNBC25_0000123",
     period: "01/05/2025 - 30/05/2025",
     method: "Báo cáo trước",
-    xknb: "XK25_0014769",
+    brand: "ASUS",
+    businessCenter: "FHO Other HN",
     creator: "Nguyễn Văn A",
     status: "pm_pending",
   },
   {
     id: "4",
-    code: "DNBC-004",
+    code: "DNBC25_0000124",
     period: "01/06/2025 - 30/06/2025",
     method: "Báo cáo trước",
-    xknb: "XK25_0014770",
+    brand: "DELL",
+    businessCenter: "FHO Other HCM",
     creator: "Trần Xuân B",
     status: "draft",
   },
   {
     id: "5",
-    code: "DNBC-005",
+    code: "DNBC25_0000125",
     period: "01/07/2025 - 30/07/2025",
     method: "Báo cáo sau",
+    brand: "HP",
+    businessCenter: "FHO Other HN",
     creator: "Nguyễn Văn A",
     status: "var_pending",
   },
   {
     id: "6",
-    code: "DNBC-006",
+    code: "DNBC25_0000126",
     period: "01/08/2025 - 30/08/2025",
     method: "Báo cáo sau",
+    brand: "LENOVO",
+    businessCenter: "FHO Other HCM",
     creator: "Trần Xuân B",
     status: "bd_pending",
   },
   {
     id: "7",
-    code: "DNBC-007",
+    code: "DNBC25_0000127",
     period: "01/09/2025 - 30/09/2025",
     method: "Báo cáo sau",
+    brand: "ACER",
+    businessCenter: "FHO Other HN",
     creator: "Nguyễn Văn A",
     status: "confirmed",
   },
   {
     id: "8",
-    code: "DNBC-008",
+    code: "DNBC25_0000128",
     period: "01/10/2025 - 30/10/2025",
     method: "Báo cáo sau",
+    brand: "AMD",
+    businessCenter: "FHO Other HCM",
     creator: "Trần Xuân B",
     status: "bd_pending",
   },
   {
     id: "9",
-    code: "DNBC-009",
+    code: "DNBC25_0000129",
     period: "01/11/2025 - 30/11/2025",
     method: "Báo cáo sau",
+    brand: "APPLE",
+    businessCenter: "FHO Other HN",
     creator: "Nguyễn Văn A",
     status: "confirmed",
   },
   {
     id: "10",
-    code: "DNBC-010",
+    code: "DNBC25_0000130",
     period: "01/12/2025 - 30/12/2025",
     method: "Báo cáo sau",
+    brand: "SAMSUNG",
+    businessCenter: "FHO Other HCM",
     creator: "Trần Xuân B",
     status: "bd_pending",
   },
@@ -572,8 +589,11 @@ export default function ReportRequestsList({
                 <th className="px-4 py-4 text-[13px] font-semibold text-[#002D56] font-sans tracking-tight whitespace-nowrap text-nowrap">
                   Hình thức báo cáo
                 </th>
+                <th className="px-4 py-4 text-[13px] font-semibold text-[#002D56] w-40 font-sans tracking-tight whitespace-nowrap">
+                  Hãng
+                </th>
                 <th className="px-4 py-4 text-[13px] font-semibold text-[#002D56] w-48 font-sans tracking-tight whitespace-nowrap">
-                  Mã XKNB
+                  Trung tâm kinh doanh
                 </th>
                 <th className="px-4 py-4 text-[13px] font-semibold text-[#002D56] w-56 font-sans tracking-tight whitespace-nowrap">
                   Người tạo
@@ -613,7 +633,12 @@ export default function ReportRequestsList({
                       {req.method}
                     </td>
                     <td className="px-4 py-3.5 text-[13px] text-gray-700 font-medium">
-                      {req.xknb || "---"}
+                      <span className="px-2 py-0.5 bg-blue-50 text-[#00529C] rounded border border-blue-100 font-bold text-[11px]">
+                        {req.brand}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3.5 text-[13px] text-gray-700 font-medium whitespace-nowrap">
+                      {req.businessCenter}
                     </td>
                     <td className="px-4 py-3.5 text-[13px] text-gray-700 font-medium">
                       {req.creator}
@@ -630,7 +655,7 @@ export default function ReportRequestsList({
               ) : (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={8}
                     className="px-4 py-10 text-center text-gray-500 text-[14px]"
                   >
                     Không tìm thấy dữ liệu phù hợp

@@ -690,8 +690,8 @@ export default function CreatePostReportDetail({
                   </span>
                   <span className="text-[#00529C] font-bold text-[16px]">
                     {mode === "create"
-                      ? "DRAFT_2026_0423_001"
-                      : "DNBC_2026_0006789"}
+                      ? "DNBC26_0000001"
+                      : "DNBC26_0123456"}
                   </span>
                 </div>
 
@@ -699,8 +699,12 @@ export default function CreatePostReportDetail({
                   <div className="flex items-center gap-2">
                     <span className="text-[#64748B]">Người tạo đơn</span>
                     <span className="font-bold text-[#334155]">
-                      {mode === "create" ? "admin" : "thaohh5"}
+                      admin
                     </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[#64748B]">Trung tâm kinh doanh</span>
+                    <span className="font-bold text-[#334155]">FHO Other HN</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-[#64748B]">Ngày tạo</span>
@@ -837,18 +841,7 @@ export default function CreatePostReportDetail({
                   value={type === "pre" ? "Báo cáo trước" : "Báo cáo sau"}
                 />
                 <InfoView label="Thời gian" value="15/09/2025 - 15/09/2025" />
-
-                {type === "pre" && (
-                  <>
-                    <InfoView
-                      label="Phiếu đề nghị CKNB"
-                      value="XKNB-001 - Báo cáo kho chính"
-                      isLink
-                    />
-                    <InfoView label="Tổng SL mã" value="15" />
-                    <InfoView label="Tổng số sản phẩm" value="129" />
-                  </>
-                )}
+                <InfoView label="Trung tâm kinh doanh" value="FHO Other HN" />
               </div>
             </div>
           </div>

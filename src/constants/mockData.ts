@@ -53,6 +53,7 @@ export interface ExportParameters {
   tag: string;
   warehouseType: string;
   company: string[];
+  org: string[];
   brand: string[];
   productLine: string[];
   productCode: string[];
@@ -96,7 +97,8 @@ export const INITIAL_BRAND_REPORTS: ExportRecord[] = [
       tag: "Báo cáo 1",
       warehouseType: "Kho báo cáo",
       company: ["Công ty A", "Công ty B"],
-      brand: ["1"],
+      org: ["A80"],
+      brand: ["APL", "SAM"],
       productLine: [],
       productCode: [],
       productName: [],
@@ -124,8 +126,9 @@ export const INITIAL_BRAND_REPORTS: ExportRecord[] = [
       tag: "Báo cáo 2",
       warehouseType: "Kho báo cáo",
       company: ["Công ty A"],
-      brand: ["2", "3", "4"],
-      productLine: ["DienThoai"],
+      org: ["A77", "A82"],
+      brand: ["ASU", "DEL", "HPQ"],
+      productLine: ["NBDLL", "PLCIS"],
       productCode: [],
       productName: [],
       partNumber: [],
@@ -151,8 +154,9 @@ export const INITIAL_BRAND_REPORTS: ExportRecord[] = [
       tag: "Báo cáo 1",
       warehouseType: "Kho tổng",
       company: ["Công ty B"],
-      brand: ["6"],
-      productLine: ["Laptop"],
+      org: ["A80"],
+      brand: ["SAM"],
+      productLine: ["SVXFU"],
       productCode: ["MH001"],
       productName: [],
       partNumber: [],
@@ -178,8 +182,9 @@ export const INITIAL_BRAND_REPORTS: ExportRecord[] = [
       tag: "Báo cáo 2",
       warehouseType: "Kho báo cáo",
       company: ["Công ty C"],
-      brand: ["1", "5"],
-      productLine: ["Tablet"],
+      org: [],
+      brand: ["APL", "LEN"],
+      productLine: ["OTMSF"],
       productCode: [],
       productName: ["iPad Pro"],
       partNumber: [],
