@@ -167,7 +167,6 @@ export default function ReportRequestsList({
     reportCategory: "",
     startDate: "",
     endDate: "",
-    xknb: "",
   });
 
   const [filters, setFilters] = useState({
@@ -398,36 +397,7 @@ export default function ReportRequestsList({
                       Current logic showed it ONLY for "Báo cáo trước".
                       We will now hide it if "Báo cáo trước" is selected.
                   */}
-                  <AnimatePresence>
-                    {form.reportMethod === "Báo cáo sau" && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0, marginTop: 0 }}
-                        animate={{ height: "auto", opacity: 1, marginTop: 0 }}
-                        exit={{ height: 0, opacity: 0, marginTop: 0 }}
-                        className="col-span-2 overflow-hidden"
-                      >
-                        <FilterField
-                          label="Chọn đề nghị XKNB"
-                          placeholder={
-                            !form.startDate || !form.endDate
-                              ? "Vui lòng chọn Từ ngày & Đến ngày trước"
-                              : "Chọn đề nghị XKNB"
-                          }
-                          value={form.xknb}
-                          onChange={(val: string) =>
-                            setForm({ ...form, xknb: val })
-                          }
-                          options={
-                            !form.startDate || !form.endDate
-                              ? []
-                              : ["XK25_0014767", "XK25_0014768", "XK25_0014769"]
-                          }
-                          disabled={!form.startDate || !form.endDate}
-                          required
-                        />
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+
                 </div>
 
                 <div className="flex justify-end gap-4 mt-10">
