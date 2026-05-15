@@ -29,6 +29,11 @@ import {
   User,
   SlidersHorizontal,
   Upload,
+  Plus,
+  Trash2,
+  Edit2,
+  FileText,
+  Package,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { BRANDS } from "../constants/mockData";
@@ -243,16 +248,371 @@ const importChangesMock: TableRow[] = tableData.map((row) => ({
   } as any,
 }));
 
+interface InventoryProduct {
+  id: string;
+  itemCode: string;
+  itemName: string;
+  ps: string;
+  unit: string;
+  inventoryQty: number;
+  exportQty: number;
+  exportPrice: number;
+  totalPrice: number;
+  serialNumberExport: string;
+  exportedQty: number;
+  serialNumberImport: string;
+  importedQty: number;
+  storageQty: number;
+}
+
+interface InventoryReportData {
+  id: string;
+  invoiceDate: string;
+  refInvoiceNumber: string;
+  customerId: string;
+  customerName: string;
+  itemCode: string;
+  itemName: string;
+  ps: string;
+  unit: string;
+  qty: number;
+  unitPrice: number;
+  totalPrice: number;
+  serialNumber: string;
+}
+
+interface InventoryRequest {
+  id: string;
+  collapsed: boolean;
+  type: string;
+  formNumber: string;
+  symbol: string;
+  company: string;
+  businessCenter: string;
+  salesTeam: string;
+  orgExport: string;
+  warehouseExport: string;
+  storekeeperExport: string;
+  orgImport: string;
+  warehouseImport: string;
+  storekeeperImport: string;
+  deliveryAddress: string;
+  deliveryMethod: string;
+  hasDelivery: boolean;
+  receiver: string;
+  phoneNumber: string;
+  email: string;
+  isDemo: boolean;
+  demoTime: string;
+  customer: string;
+  isPickupFromCustomer: boolean;
+  pickupAddress: string;
+  description: string;
+  note: string;
+  isB2B: boolean;
+  products: InventoryProduct[];
+  reportData: InventoryReportData[];
+}
+
 export default function CreatePreReportDetail({
   category,
+  mode = "create",
+  isApproveMode = false,
   onBack,
+  brandReports = [],
 }: {
   category: "quantity" | "serial";
+  mode?: "create" | "view";
+  isApproveMode?: boolean;
   onBack: () => void;
+  brandReports?: any[];
 }) {
+  const [inventoryRequests, setInventoryRequests] = useState<InventoryRequest[]>(
+    mode === "view"
+      ? [
+          {
+            id: "REQ_001",
+            collapsed: false,
+            type: "Xuất bán trả chậm",
+            formNumber: "FORM_001",
+            symbol: "SYM_001",
+            company: "FPT Retail",
+            businessCenter: "Trung tâm 1",
+            salesTeam: "Team A",
+            orgExport: "Kho tổng HN",
+            warehouseExport: "Kho 1",
+            storekeeperExport: "Nguyễn Văn A",
+            orgImport: "Kho chi nhánh HCM",
+            warehouseImport: "Kho 2",
+            storekeeperImport: "Trần Thị B",
+            deliveryAddress: "261 Cầu Giấy, Hà Nội",
+            deliveryMethod: "Vận chuyển",
+            hasDelivery: true,
+            receiver: "Anh Ba",
+            phoneNumber: "0987654321",
+            email: "ba.anh@example.com",
+            isDemo: false,
+            demoTime: "",
+            customer: "Công ty Đối tác X",
+            isPickupFromCustomer: false,
+            pickupAddress: "",
+            description: "Đề nghị xuất hàng báo cáo hãng quý 2",
+            note: "Hàng gấp cần giao sớm",
+            isB2B: true,
+            products: [
+              {
+                id: "PROD_MOCK_1",
+                itemCode: "IP15",
+                itemName: "iPhone 15 128GB",
+                ps: "SMARTPHONE",
+                unit: "Chiếc",
+                inventoryQty: 100,
+                exportQty: 10,
+                exportPrice: 19990000,
+                totalPrice: 199900000,
+                serialNumberExport: "---",
+                exportedQty: 0,
+                serialNumberImport: "---",
+                importedQty: 0,
+                storageQty: 100,
+              },
+              {
+                id: "PROD_MOCK_2",
+                itemCode: "MACM3",
+                itemName: "MacBook Pro M3",
+                ps: "LAPTOP",
+                unit: "Chiếc",
+                inventoryQty: 50,
+                exportQty: 5,
+                exportPrice: 39990000,
+                totalPrice: 199950000,
+                serialNumberExport: "---",
+                exportedQty: 0,
+                serialNumberImport: "---",
+                importedQty: 0,
+                storageQty: 50,
+              },
+            ],
+            reportData: [
+              {
+                id: "RD_MOCK_1",
+                invoiceDate: "10/05/2026",
+                refInvoiceNumber: "INV_998877",
+                customerId: "CUS123",
+                customerName: "Công ty Đối tác X",
+                itemCode: "IP15",
+                itemName: "iPhone 15 128GB",
+                ps: "SMARTPHONE",
+                unit: "Chiếc",
+                qty: 10,
+                unitPrice: 19990000,
+                totalPrice: 199900000,
+                serialNumber: "SN_IP15_MOCK_001...",
+              },
+            ],
+          },
+        ]
+      : [
+          {
+            id: "REQ_001",
+            collapsed: false,
+            type: "",
+            formNumber: "",
+            symbol: "",
+            company: "",
+            businessCenter: "",
+            salesTeam: "",
+            orgExport: "",
+            warehouseExport: "",
+            storekeeperExport: "",
+            orgImport: "",
+            warehouseImport: "",
+            storekeeperImport: "",
+            deliveryAddress: "",
+            deliveryMethod: "",
+            hasDelivery: false,
+            receiver: "",
+            phoneNumber: "",
+            email: "",
+            isDemo: false,
+            demoTime: "",
+            customer: "",
+            isPickupFromCustomer: false,
+            pickupAddress: "",
+            description: "",
+            note: "",
+            isB2B: false,
+            products: [],
+            reportData: [],
+          },
+        ]
+  );
+
+  const addRequest = () => {
+    setInventoryRequests((prev) => [
+      ...prev,
+      {
+        id: `REQ_${String(prev.length + 1).padStart(3, "0")}`,
+        collapsed: false,
+        type: "",
+        formNumber: "",
+        symbol: "",
+        company: "",
+        businessCenter: "",
+        salesTeam: "",
+        orgExport: "",
+        warehouseExport: "",
+        storekeeperExport: "",
+        orgImport: "",
+        warehouseImport: "",
+        storekeeperImport: "",
+        deliveryAddress: "",
+        deliveryMethod: "",
+        hasDelivery: false,
+        receiver: "",
+        phoneNumber: "",
+        email: "",
+        isDemo: false,
+        demoTime: "",
+        customer: "",
+        isPickupFromCustomer: false,
+        pickupAddress: "",
+        description: "",
+        note: "",
+        isB2B: false,
+        products: [],
+        reportData: [],
+      },
+    ]);
+  };
+
+  const removeRequest = (id: string) => {
+    if (inventoryRequests.length > 1) {
+      setInventoryRequests((prev) => prev.filter((r) => r.id !== id));
+    }
+  };
+
+  const toggleCollapse = (id: string) => {
+    setInventoryRequests((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, collapsed: !r.collapsed } : r))
+    );
+  };
+
+  const updateRequest = (id: string, updates: Partial<InventoryRequest>) => {
+    setInventoryRequests((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, ...updates } : r))
+    );
+  };
+
+  const addProduct = (requestId: string) => {
+    const mockData = [
+      { itemCode: "IP15", itemName: "iPhone 15 128GB", ps: "SMARTPHONE", unit: "Chiếc", exportPrice: 19990000 },
+      { itemCode: "IP15P", itemName: "iPhone 15 Pro 256GB", ps: "SMARTPHONE", unit: "Chiếc", exportPrice: 28990000 },
+      { itemCode: "S24U", itemName: "Galaxy S24 Ultra", ps: "SMARTPHONE", unit: "Chiếc", exportPrice: 29990000 },
+      { itemCode: "MACM2", itemName: "MacBook Air M2", ps: "LAPTOP", unit: "Chiếc", exportPrice: 24990000 },
+      { itemCode: "MACM3", itemName: "MacBook Pro M3", ps: "LAPTOP", unit: "Chiếc", exportPrice: 39990000 },
+      { itemCode: "AW9", itemName: "Apple Watch Series 9", ps: "WATCH", unit: "Chiếc", exportPrice: 10990000 },
+      { itemCode: "AIP3", itemName: "AirPods Pro 2", ps: "ACCESSORY", unit: "Chiếc", exportPrice: 5990000 },
+      { itemCode: "IPMN", itemName: "iPad Mini 6", ps: "TABLET", unit: "Chiếc", exportPrice: 12990000 },
+      { itemCode: "IPDA", itemName: "iPad Air 5", ps: "TABLET", unit: "Chiếc", exportPrice: 15990000 },
+      { itemCode: "LGT1", itemName: "Logitech MX Master 3S", ps: "ACCESSORY", unit: "Chiếc", exportPrice: 2490000 },
+    ];
+
+    setInventoryRequests((prev) =>
+      prev.map((r) => {
+        if (r.id === requestId) {
+          const newProducts: InventoryProduct[] = mockData.map((m, idx) => ({
+            id: `PROD_${Date.now()}_${idx}`,
+            itemCode: m.itemCode,
+            itemName: m.itemName,
+            ps: m.ps,
+            unit: m.unit,
+            inventoryQty: 100,
+            exportQty: 1 + idx,
+            exportPrice: m.exportPrice,
+            totalPrice: (1 + idx) * m.exportPrice,
+            serialNumberExport: "---",
+            exportedQty: 0,
+            serialNumberImport: "---",
+            importedQty: 0,
+            storageQty: 0,
+          }));
+          return { ...r, products: [...r.products, ...newProducts] };
+        }
+        return r;
+      })
+    );
+  };
+
+  const createReportData = (requestId: string) => {
+    setInventoryRequests((prev) =>
+      prev.map((r) => {
+        if (r.id === requestId) {
+          const newReportData: InventoryReportData[] = r.products.map((p) => ({
+            id: `RD_${Date.now()}_${p.id}`,
+            invoiceDate: "",
+            refInvoiceNumber: "",
+            customerId: "",
+            customerName: r.customer,
+            itemCode: p.itemCode,
+            itemName: p.itemName,
+            ps: p.ps,
+            unit: p.unit,
+            qty: p.exportQty,
+            unitPrice: p.exportPrice,
+            totalPrice: p.exportQty * p.exportPrice,
+            serialNumber: p.serialNumberExport !== "---" ? p.serialNumberExport : "",
+          }));
+          return { ...r, reportData: newReportData };
+        }
+        return r;
+      })
+    );
+    triggerToast("Đã tạo dữ liệu báo cáo từ sản phẩm xuất!");
+  };
+
+  const updateReportData = (requestId: string, rdId: string, updates: Partial<InventoryReportData>) => {
+    setInventoryRequests((prev) =>
+      prev.map((r) => {
+        if (r.id === requestId) {
+          return {
+            ...r,
+            reportData: r.reportData.map((rd) =>
+              rd.id === rdId ? { ...rd, ...updates } : rd
+            ),
+          };
+        }
+        return r;
+      })
+    );
+  };
+
+  const removeReportData = (requestId: string, rdId: string) => {
+    setInventoryRequests((prev) =>
+      prev.map((r) => {
+        if (r.id === requestId) {
+          return {
+            ...r,
+            reportData: r.reportData.filter((rd) => rd.id !== rdId),
+          };
+        }
+        return r;
+      })
+    );
+  };
+
+  const removeProduct = (requestId: string, productId: string) => {
+    setInventoryRequests((prev) =>
+      prev.map((r) => {
+        if (r.id === requestId) {
+          return { ...r, products: r.products.filter((p) => p.id !== productId) };
+        }
+        return r;
+      })
+    );
+  };
+
   const type = "pre" as string;
-  const mode = "create" as string;
-  const isApproveMode = false;
   const [activeTab, setActiveTab] = useState("ledger");
   const [showHighlight, setShowHighlight] = useState(true);
   const [showToast, setShowToast] = useState(false);
@@ -724,8 +1084,9 @@ export default function CreatePreReportDetail({
             <input
               type="date"
               value={value}
+              readOnly={mode === "view"}
               onChange={(e) => onChange(e.target.value)}
-              className="w-full px-3 py-1.5 bg-white border border-gray-300 rounded text-[12px] focus:outline-none focus:ring-1 focus:ring-[#00529C] focus:border-[#00529C] appearance-none"
+              className={`w-full px-3 py-1.5 bg-white border border-gray-300 rounded text-[12px] focus:outline-none focus:ring-1 focus:ring-[#00529C] focus:border-[#00529C] appearance-none ${mode === "view" ? "bg-gray-50 cursor-not-allowed" : ""}`}
             />
             <Calendar
               size={14}
@@ -736,8 +1097,9 @@ export default function CreatePreReportDetail({
           <div className="relative group">
             <select
               value={value}
+              disabled={mode === "view"}
               onChange={(e) => onChange(e.target.value)}
-              className={`w-full px-3 py-1.5 bg-white border border-gray-300 rounded text-[12px] focus:outline-none focus:ring-1 focus:ring-[#00529C] focus:border-[#00529C] appearance-none ${!value ? "text-gray-400" : "text-gray-900"}`}
+              className={`w-full px-3 py-1.5 bg-white border border-gray-300 rounded text-[12px] focus:outline-none focus:ring-1 focus:ring-[#00529C] focus:border-[#00529C] appearance-none ${!value ? "text-gray-400" : "text-gray-900"} ${mode === "view" ? "bg-gray-50 cursor-not-allowed" : ""}`}
             >
               <option value="">{placeholder}</option>
               {options.map((opt: any) => (
@@ -746,23 +1108,28 @@ export default function CreatePreReportDetail({
                 </option>
               ))}
             </select>
-            <ChevronDown
-              size={14}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-            />
+            {!isView && (
+               <ChevronDown
+                  size={14}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                />
+            )}
           </div>
         ) : (
           <input
             type="text"
             value={value}
+            readOnly={mode === "view"}
             onChange={(e) => onChange(e.target.value)}
-            className="w-full px-3 py-1.5 bg-white border border-gray-300 rounded text-[12px] focus:outline-none focus:ring-1 focus:ring-[#00529C] focus:border-[#00529C]"
+            className={`w-full px-3 py-1.5 bg-white border border-gray-300 rounded text-[12px] focus:outline-none focus:ring-1 focus:ring-[#00529C] focus:border-[#00529C] ${mode === "view" ? "bg-gray-50 cursor-not-allowed" : ""}`}
             placeholder={placeholder}
           />
         )}
       </div>
     </div>
   );
+
+  const isView = mode === "view";
 
   const showActionColumn =
     mode === "create" || (isApproveMode && didFreshImport);
@@ -795,35 +1162,35 @@ export default function CreatePreReportDetail({
                 {type === "pre" ? "(trước)" : "(sau)"}
               </h1>
 
-              <div className="space-y-3">
-                <div className="flex items-center gap-3 text-[15px]">
-                  <span className="text-[#64748B]">
-                    Số phiếu đề nghị báo cáo
-                  </span>
-                  <span className="text-[#00529C] font-bold text-[16px]">
-                    {mode === "create"
-                      ? "DNBC26_0000001"
-                      : "DNBC26_0123456"}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-12 text-[15px]">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[#64748B]">Người tạo đơn</span>
-                    <span className="font-bold text-[#334155]">
-                       admin
+              {mode !== "create" && (
+                <div className="space-y-3 mt-4">
+                  <div className="flex items-center gap-3 text-[15px]">
+                    <span className="text-[#64748B]">
+                      Số phiếu đề nghị báo cáo
+                    </span>
+                    <span className="text-[#00529C] font-bold text-[16px]">
+                      DNBC26_0123456
                     </span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[#64748B]">Trung tâm kinh doanh</span>
-                    <span className="font-bold text-[#334155]">FHO Other HN</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[#64748B]">Ngày tạo</span>
-                    <span className="font-bold text-[#334155]">23/04/2026</span>
+
+                  <div className="flex items-center gap-12 text-[15px]">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[#64748B]">Người tạo đơn</span>
+                      <span className="font-bold text-[#334155]">admin</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[#64748B]">Trung tâm kinh doanh</span>
+                      <span className="font-bold text-[#334155]">
+                        FHO Other HN
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[#64748B]">Ngày tạo</span>
+                      <span className="font-bold text-[#334155]">23/04/2026</span>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
 
             <div className="flex flex-col items-end gap-6">
@@ -843,22 +1210,6 @@ export default function CreatePreReportDetail({
               <div className="flex items-center gap-3">
                 {mode === "create" ? (
                   <>
-                    <button
-                      onClick={() => setShowImportModal(true)}
-                      className="px-5 py-2.5 border border-[#00529C] text-[#00529C] rounded-lg text-[14px] font-bold hover:bg-blue-50 transition-all flex items-center gap-2 shadow-sm"
-                    >
-                      <RefreshCcw size={16} />
-                      Import dữ liệu
-                    </button>
-                    <button
-                      onClick={() =>
-                        triggerToast("Đang khởi tạo tệp tin xuất liệu...")
-                      }
-                      className="px-5 py-2.5 border border-[#00529C] text-[#00529C] rounded-lg text-[14px] font-bold hover:bg-blue-50 transition-all flex items-center gap-2 shadow-sm"
-                    >
-                      <Download size={16} />
-                      Export dữ liệu
-                    </button>
                     <button
                       onClick={() =>
                         handleActionWithBack("Lưu dự thảo thành công!")
@@ -880,22 +1231,6 @@ export default function CreatePreReportDetail({
                   </>
                 ) : isApproveMode ? (
                   <>
-                    <button
-                      onClick={() => setShowImportModal(true)}
-                      className="px-5 py-2.5 border border-[#00529C] text-[#00529C] rounded-lg text-[14px] font-bold hover:bg-blue-50 transition-all flex items-center gap-2 shadow-sm"
-                    >
-                      <RefreshCcw size={16} />
-                      Import dữ liệu
-                    </button>
-                    <button
-                      onClick={() =>
-                        triggerToast("Đang khởi tạo tệp tin xuất liệu...")
-                      }
-                      className="px-5 py-2.5 border border-[#00529C] text-[#00529C] rounded-lg text-[14px] font-bold hover:bg-blue-50 transition-all flex items-center gap-2 shadow-sm"
-                    >
-                      <Download size={16} />
-                      Export dữ liệu
-                    </button>
                     <button
                       onClick={() =>
                         handleActionWithBack("Đã từ chối đề nghị báo cáo.")
@@ -936,431 +1271,327 @@ export default function CreatePreReportDetail({
         </div>
 
         <div className="p-6 space-y-6">
-          {/* General Info Card */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-            <div className="px-4 py-3 bg-[#FCFDFF] border-b border-gray-100 flex items-center gap-2 cursor-pointer group">
-              <div className="w-1 h-5 bg-[#00529C] rounded-full" />
-              <ChevronDown size={14} className="text-[#00529C]" />
-              <span className="text-[14px] font-bold text-[#002D56] font-sans uppercase tracking-wide">
-                Thông tin chung
-              </span>
-            </div>
-            <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-x-8 gap-y-6">
-                <InfoView label="Hãng" value="Apple" />
-                <InfoView label="Hình thức báo cáo" value="Báo cáo trước" />
-                <InfoView
-                  label="Trung tâm kinh doanh"
-                  value="FHO Other HN"
-                />
-                <InfoView label="Ngày hạch toán" value="04/07/2025" />
-
-                <InfoView label="Org xuất" value="A77 - Kho ban HN" />
-                <InfoView label="Kho xuất" value="Kho ban KQK - HN" />
-                <InfoView label="Org nhập" value="A77 - Kho ban HN" />
-                <InfoView label="Kho nhập" value="Kho hang ban - TSGX - HN" />
-
-                <div className="md:col-span-4">
-                  <InfoView
-                    label="Diễn giải"
-                    value="phutb3 Chuyển sang kho bán hàng xin hàng xin nhập trước xuất trước cho MBW số HĐ 128429 còn dư."
-                  />
-                </div>
-              </div>
-              <div className="flex gap-x-12 mt-6 pt-6 border-t border-gray-100">
-                <div className="flex gap-2 items-baseline">
-                  <span className="text-[13px] font-medium text-gray-500">
-                    Tổng SL mã:
-                  </span>
-                  <span className="text-[16px] font-bold text-[#002D56]">
-                    15
-                  </span>
-                </div>
-                <div className="flex gap-2 items-baseline">
-                  <span className="text-[13px] font-medium text-gray-500">
-                    Tổng số sản phẩm:
-                  </span>
-                  <span className="text-[16px] font-bold text-[#002D56]">
-                    129
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Report List Card */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-            <div className="px-4 py-3 bg-[#FCFDFF] border-b border-gray-100 flex items-center gap-2 cursor-pointer">
-              <div className="w-1 h-5 bg-[#00529C] rounded-full" />
-              <ChevronDown size={14} className="text-[#00529C]" />
-              <span className="text-[14px] font-bold text-[#002D56] font-sans uppercase tracking-wide">
-                Thông tin dữ liệu trong kỳ
-              </span>
-            </div>
-
-            <div className="p-4">
-              <div className="flex items-center justify-between mb-4 border-b border-gray-200">
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setActiveTab("ledger")}
-                    className={`px-6 py-2.5 rounded-t-lg text-[13px] font-medium transition-all relative ${activeTab === "ledger" ? "text-[#00529C] bg-white border-x border-t border-gray-200 z-10" : "text-gray-500 bg-gray-50 hover:bg-gray-100"}`}
-                  >
-                    Thông tin line hàng
-                    {activeTab === "ledger" && (
-                      <div className="absolute top-0 left-0 w-full h-0.5 bg-[#00529C]" />
-                    )}
-                    {activeTab === "ledger" && (
-                      <div className="absolute -bottom-px left-0 w-full h-px bg-white" />
-                    )}
-                  </button>
-                  <button
-                    onClick={() => setActiveTab("import")}
-                    className={`px-6 py-2.5 rounded-t-lg text-[13px] font-medium transition-all relative ${activeTab === "import" ? "text-[#00529C] bg-white border-x border-t border-gray-200 z-10" : "text-gray-500 bg-gray-50 hover:bg-gray-100"}`}
-                  >
-                    Dữ liệu import
-                    {activeTab === "import" && (
-                      <div className="absolute top-0 left-0 w-full h-0.5 bg-[#00529C]" />
-                    )}
-                    {activeTab === "import" && (
-                      <div className="absolute -bottom-px left-0 w-full h-px bg-white" />
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              {/* Table Filters for Ledger Tab */}
-              {activeTab === "ledger" && (
-                <div className="mb-6 space-y-4">
-                  <div className="flex items-center gap-4">
-                    <div className="relative flex-1">
-                      <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 pointer-events-none">
-                        <Search size={18} />
-                      </span>
-                      <input
-                        type="text"
-                        value={ledgerSearchTerm}
-                        onChange={(e) => setLedgerSearchTerm(e.target.value)}
-                        className="block w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-md text-[13px] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00529C]/10 focus:border-[#00529C] transition-all"
-                        placeholder="Tìm kiếm mã sản phẩm, tên sản phẩm..."
-                      />
-                      {ledgerSearchTerm && (
-                        <button
-                          onClick={() => setLedgerSearchTerm("")}
-                          className="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-600"
-                        >
-                          <X size={16} />
-                        </button>
-                      )}
-                    </div>
-                    <button
-                      onClick={() => setIsLedgerFilterOpen(!isLedgerFilterOpen)}
-                      className={`flex items-center gap-2 text-[13px] font-medium px-4 py-2.5 rounded-md transition-colors border ${isLedgerFilterOpen ? "text-[#00529C] bg-blue-50 border-blue-100" : "text-gray-600 bg-white border-gray-200 hover:bg-gray-50"}`}
-                    >
-                      <SlidersHorizontal size={16} />
-                      Bộ lọc nâng cao
-                    </button>
+          <AnimatePresence>
+            {inventoryRequests.map((req, idx) => (
+              <motion.div
+                key={req.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden"
+              >
+                {/* Header of Section */}
+                <div className="px-4 py-3 bg-[#FCFDFF] border-b border-gray-100 flex items-center justify-between group">
+                  <div className="flex items-center gap-2 cursor-pointer select-none" onClick={() => toggleCollapse(req.id)}>
+                    <div className="w-1 h-5 bg-[#00529C] rounded-full" />
+                    <ChevronDown 
+                      size={14} 
+                      className={`text-[#00529C] transition-transform duration-200 ${req.collapsed ? "-rotate-90" : ""}`} 
+                    />
+                    <Package size={16} className="text-[#00529C]" />
+                    <span className="text-[14px] font-bold text-[#002D56] font-sans uppercase tracking-wide">
+                      Đề nghị xuất kho #{idx + 1}
+                    </span>
                   </div>
-
-                  <AnimatePresence>
-                    {isLedgerFilterOpen && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        className="overflow-hidden bg-[#F8FAFC]/50 border border-gray-100 rounded-lg"
+                  <div className="flex items-center gap-2">
+                    {!isApproveMode && inventoryRequests.length > 1 && (
+                      <button
+                        onClick={() => removeRequest(req.id)}
+                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
+                        title="Xóa đề nghị"
                       >
-                        <div className="p-4">
-                          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                            <FilterField
-                              label="Mã sản phẩm"
-                              placeholder="Nhập mã SP"
-                              value={ledgerFilters.itemCode}
-                              onChange={(v: string) =>
-                                setLedgerFilters({ ...ledgerFilters, itemCode: v })
-                              }
-                            />
-                            <FilterField
-                              label="Tên sản phẩm"
-                              placeholder="Nhập tên SP"
-                              value={ledgerFilters.itemName}
-                              onChange={(v: string) =>
-                                setLedgerFilters({ ...ledgerFilters, itemName: v })
-                              }
-                            />
-                            <FilterField
-                              label="Dòng sản phẩm (PS)"
-                              placeholder="Nhập dòng SP"
-                              value={ledgerFilters.ps}
-                              onChange={(v: string) =>
-                                setLedgerFilters({ ...ledgerFilters, ps: v })
-                              }
-                            />
-                            <FilterField
-                              label="Part Number"
-                              placeholder="Nhập Part No"
-                              value={ledgerFilters.partNumber}
-                              onChange={(v: string) =>
-                                setLedgerFilters({ ...ledgerFilters, partNumber: v })
-                              }
-                            />
+                        <Trash2 size={16} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <AnimatePresence>
+                  {!req.collapsed && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="p-6 space-y-8">
+                        {/* Subsection: Thông tin chung */}
+                        <div className="space-y-4">
+                          <div className="flex items-center gap-2 mb-4">
+                            <ChevronDown size={14} className="text-[#00529C]" />
+                            <span className="text-[13px] font-bold text-[#002D56] uppercase">
+                              Thông tin chung
+                            </span>
                           </div>
-                          <div className="flex justify-end gap-3 mt-4 pt-4 border-t border-gray-100">
-                            <button
-                              onClick={resetLedgerFilters}
-                              className="px-4 py-1.5 text-[12px] font-medium text-gray-500 hover:text-gray-700"
-                            >
-                              Xóa bộ lọc
-                            </button>
-                            <button
-                              onClick={() => setIsLedgerFilterOpen(false)}
-                              className="px-6 py-1.5 bg-[#00529C] text-white text-[12px] font-medium rounded-md hover:bg-[#00427D]"
-                            >
-                              Áp dụng
-                            </button>
+
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+                            <FilterField label="Công ty *" placeholder="Chọn công ty" value={req.company} onChange={(v: string) => updateRequest(req.id, { company: v })} options={["FDC", "FTG"]} />
+                            <FilterField label="Trung tâm kinh doanh *" placeholder="Chọn TTKD" value={req.businessCenter} onChange={(v: string) => updateRequest(req.id, { businessCenter: v })} options={["FDC HN", "FDC HCM"]} />
+                            <FilterField label="Salesteam *" placeholder="Chọn Sales Team" value={req.salesTeam} onChange={(v: string) => updateRequest(req.id, { salesTeam: v })} options={["Team 1", "Team 2"]} />
+
+                            <FilterField label="Org xuất *" placeholder="Chọn org xuất" value={req.orgExport} onChange={(v: string) => updateRequest(req.id, { orgExport: v })} options={["A80", "A77"]} />
+                            <FilterField label="Kho xuất *" placeholder="Chọn kho xuất" value={req.warehouseExport} onChange={(v: string) => updateRequest(req.id, { warehouseExport: v })} options={["Kho 1", "Kho 2"]} />
+                            <FilterField label="Thủ kho xuất *" placeholder="Chọn thủ kho" value={req.storekeeperExport} onChange={(v: string) => updateRequest(req.id, { storekeeperExport: v })} options={["Admin 1", "Admin 2"]} />
+
+                            <FilterField label="Org nhập *" placeholder="Chọn org nhập" value={req.orgImport} onChange={(v: string) => updateRequest(req.id, { orgImport: v })} options={["A80", "A77"]} />
+                            <FilterField label="Kho nhập *" placeholder="Chọn kho nhập" value={req.warehouseImport} onChange={(v: string) => updateRequest(req.id, { warehouseImport: v })} options={["Kho A", "Kho B"]} />
+                            <FilterField label="Thủ kho nhập *" placeholder="Chọn thủ kho" value={req.storekeeperImport} onChange={(v: string) => updateRequest(req.id, { storekeeperImport: v })} options={["Admin A", "Admin B"]} />
+                          </div>
+
+                          <div className="grid grid-cols-1 gap-6">
+                            <div className="relative group">
+                              <FilterField label="Địa chỉ giao hàng *" placeholder="Nhập địa chỉ giao hàng" value={req.deliveryAddress} onChange={(v: string) => updateRequest(req.id, { deliveryAddress: v })} />
+                              <Edit2 size={12} className="absolute right-2 bottom-3 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" />
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="flex flex-col gap-1.5 text-left">
+                              <label className="text-[12px] font-semibold text-[#4A5568]">Diễn giải *</label>
+                              <textarea rows={2} value={req.description} readOnly={mode === "view"} onChange={(e) => updateRequest(req.id, { description: e.target.value })} className={`w-full px-3 py-2 bg-white border border-gray-300 rounded text-[12px] focus:outline-none focus:ring-1 focus:ring-[#00529C] focus:border-[#00529C] resize-none ${mode === "view" ? "bg-gray-50 cursor-not-allowed" : ""}`} placeholder="Nhập diễn giải" />
+                            </div>
+                            <div className="flex flex-col gap-1.5 text-left">
+                              <label className="text-[12px] font-semibold text-[#4A5568]">Ghi chú</label>
+                              <textarea rows={2} value={req.note} readOnly={mode === "view"} onChange={(e) => updateRequest(req.id, { note: e.target.value })} className={`w-full px-3 py-2 bg-white border border-gray-300 rounded text-[12px] focus:outline-none focus:ring-1 focus:ring-[#00529C] focus:border-[#00529C] resize-none ${mode === "view" ? "bg-gray-50 cursor-not-allowed" : ""}`} placeholder="Nhập ghi chú" />
+                            </div>
                           </div>
                         </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              )}
 
-              {/* Table Filters for Import Tab */}
-              {activeTab === "import" && (
-                <div className="mb-6 space-y-4">
-                  <div className="flex items-center gap-4">
-                    <div className="relative flex-1">
-                      <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 pointer-events-none">
-                        <Search size={18} />
-                      </span>
-                      <input
-                        type="text"
-                        value={importSearchTerm}
-                        onChange={(e) => setImportSearchTerm(e.target.value)}
-                        className="block w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-md text-[13px] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00529C]/10 focus:border-[#00529C] transition-all"
-                        placeholder="Tìm kiếm nhanh khách hàng, hóa đơn, sản phẩm..."
-                      />
-                      {importSearchTerm && (
-                        <button
-                          onClick={() => setImportSearchTerm("")}
-                          className="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-600"
-                        >
-                          <X size={16} />
-                        </button>
-                      )}
-                    </div>
-                    <button
-                      onClick={() => setIsImportFilterOpen(!isImportFilterOpen)}
-                      className={`flex items-center gap-2 text-[13px] font-medium px-4 py-2.5 rounded-md transition-colors border ${isImportFilterOpen ? "text-[#00529C] bg-blue-50 border-blue-100" : "text-gray-600 bg-white border-gray-200 hover:bg-gray-50"}`}
-                    >
-                      <SlidersHorizontal size={16} />
-                      Bộ lọc nâng cao
-                    </button>
-                  </div>
-
-                  <AnimatePresence>
-                    {isImportFilterOpen && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        className="overflow-hidden bg-[#F8FAFC]/50 border border-gray-100 rounded-lg"
-                      >
-                        <div className="p-4">
-                          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                            <FilterField
-                              label="Mã khách hàng"
-                              placeholder="Nhập mã KH"
-                              value={importFilters.reportCustomerId}
-                              onChange={(v: string) =>
-                                setImportFilters({
-                                  ...importFilters,
-                                  reportCustomerId: v,
-                                })
-                              }
-                            />
-                            <FilterField
-                              label="Tên khách hàng"
-                              placeholder="Nhập tên KH"
-                              value={importFilters.reportCustomerName}
-                              onChange={(v: string) =>
-                                setImportFilters({
-                                  ...importFilters,
-                                  reportCustomerName: v,
-                                })
-                              }
-                            />
-                            <FilterField
-                              label="Invoice Date"
-                              placeholder="Chọn ngày"
-                              value={importFilters.reportInvoiceDate}
-                              onChange={(v: string) =>
-                                setImportFilters({
-                                  ...importFilters,
-                                  reportInvoiceDate: v,
-                                })
-                              }
-                              isDate
-                            />
-                            <FilterField
-                              label="Invoice Number"
-                              placeholder="Nhập số hóa đơn"
-                              value={importFilters.reportInvoiceNumber}
-                              onChange={(v: string) =>
-                                setImportFilters({
-                                  ...importFilters,
-                                  reportInvoiceNumber: v,
-                                })
-                              }
-                            />
-                            <FilterField
-                              label="Mã sản phẩm"
-                              placeholder="Nhập mã SP"
-                              value={importFilters.itemCode}
-                              onChange={(v: string) =>
-                                setImportFilters({ ...importFilters, itemCode: v })
-                              }
-                            />
-                            <FilterField
-                              label="Tên sản phẩm"
-                              placeholder="Nhập tên SP"
-                              value={importFilters.itemName}
-                              onChange={(v: string) =>
-                                setImportFilters({ ...importFilters, itemName: v })
-                              }
-                            />
-                            <FilterField
-                              label="Dòng sản phẩm (PS)"
-                              placeholder="Nhập dòng SP"
-                              value={importFilters.ps}
-                              onChange={(v: string) =>
-                                setImportFilters({ ...importFilters, ps: v })
-                              }
-                            />
+                        {/* Subsection: Sản phẩm xuất */}
+                        <div className="space-y-4 pt-6 border-t border-gray-100">
+                          <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-2">
+                              <ChevronDown size={14} className="text-[#00529C]" />
+                              <span className="text-[13px] font-bold text-[#002D56] uppercase">
+                                Sản phẩm xuất
+                              </span>
+                            </div>
+                            {mode !== "view" && (
+                              <div className="flex items-center gap-3">
+                                <button onClick={() => createReportData(req.id)} className="flex items-center gap-1.5 text-[12px] font-bold text-[#00529C] px-3 py-1.5 border border-[#00529C] rounded hover:bg-blue-50">
+                                  <RefreshCcw size={14} />
+                                  Tạo dữ liệu báo cáo
+                                </button>
+                                <button onClick={() => setShowImportModal(true)} className="flex items-center gap-1.5 text-[12px] font-bold text-[#00529C] px-3 py-1.5 border border-[#00529C] rounded hover:bg-blue-50">
+                                  <FilePlus size={14} />
+                                  Import
+                                </button>
+                              </div>
+                            )}
                           </div>
-                          <div className="flex justify-end gap-3 mt-4 pt-4 border-t border-gray-100">
-                            <button
-                              onClick={resetImportFilters}
-                              className="px-4 py-1.5 text-[12px] font-medium text-gray-500 hover:text-gray-700"
+
+
+                          <div className="overflow-x-auto border border-gray-200 rounded-lg max-h-[400px]">
+                            <table className="w-max min-w-full text-left border-collapse table-fixed">
+                              <thead>
+                                <tr className="bg-[#F8FAFC]">
+                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[50px]">No</th>
+                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[120px]">Mã sản phẩm</th>
+                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[120px]">Tên sản phẩm</th>
+                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[100px]">PS</th>
+                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[100px]">Đơn vị tính</th>
+                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[120px]">Số lượng tồn</th>
+                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[120px]">Số lượng xuất</th>
+                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[120px]">Đơn giá xuất</th>
+                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[120px]">Thành tiền</th>
+                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[120px]">Số SN/IMEI xuất</th>
+                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[120px]">SL đã xuất</th>
+                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[120px]">Số SN/IMEI nhập</th>
+                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[120px]">SL đã nhập</th>
+                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[120px]">Tác vụ</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {req.products.length > 0 ? (
+                                  req.products.map((p, pIdx) => (
+                                    <tr key={p.id} className="hover:bg-gray-50 border-b border-gray-100 group/row">
+                                      <td className="px-4 py-3 text-[12px]">{String(pIdx + 1).padStart(2, '0')}</td>
+                                      <td className="px-4 py-3 text-[12px] relative">
+                                        <input type="text" value={p.itemCode} readOnly={mode === "view"} onChange={(e) => {}} className={`w-full bg-transparent border-none focus:ring-0 focus:outline-none p-0 ${mode === "view" ? "cursor-default" : ""}`} placeholder="..." />
+                                        {!isView && <Edit2 size={10} className="absolute right-2 top-4 text-gray-300 opacity-0 group-hover/row:opacity-100" />}
+                                      </td>
+                                      <td className="px-4 py-3 text-[12px] relative font-medium">
+                                        <input type="text" value={p.itemName} readOnly={mode === "view"} onChange={(e) => {}} className={`w-full bg-transparent border-none focus:ring-0 focus:outline-none p-0 ${mode === "view" ? "cursor-default" : ""}`} placeholder="..." />
+                                        {!isView && <Edit2 size={10} className="absolute right-2 top-4 text-gray-300 opacity-0 group-hover/row:opacity-100" />}
+                                      </td>
+                                      <td className="px-4 py-3 text-[12px]">{p.ps || "---"}</td>
+                                      <td className="px-4 py-3 text-[12px]">{p.unit || "---"}</td>
+                                      <td className="px-4 py-3 text-[12px]">{p.inventoryQty}</td>
+                                      <td className="px-4 py-3 text-[12px] relative font-bold text-[#00529C]">
+                                        <input type="number" value={p.exportQty} readOnly={mode === "view"} onChange={(e) => {}} className={`w-full bg-transparent border-none focus:ring-0 focus:outline-none p-0 ${mode === "view" ? "cursor-default" : ""}`} placeholder="0" />
+                                        {!isView && <Edit2 size={10} className="absolute right-2 top-4 text-gray-300 opacity-0 group-hover/row:opacity-100" />}
+                                      </td>
+                                      <td className="px-4 py-3 text-[12px]">{p.exportPrice.toLocaleString()}</td>
+                                      <td className="px-4 py-3 text-[12px] font-bold">{(p.exportQty * p.exportPrice).toLocaleString()}</td>
+                                      <td className="px-4 py-3 text-[12px] text-gray-400">{p.serialNumberExport}</td>
+                                      <td className="px-4 py-3 text-[12px]">{p.exportedQty}</td>
+                                      <td className="px-4 py-3 text-[12px] text-gray-400">{p.serialNumberImport}</td>
+                                      <td className="px-4 py-3 text-[12px]">{p.importedQty}</td>
+                                      <td className="px-4 py-3 text-[12px]">
+                                        <div className="flex items-center gap-3">
+                                          {mode !== "view" && (
+                                            <button onClick={() => removeProduct(req.id, p.id)} className="text-gray-400 hover:text-red-500 transition-colors" title="Xóa dòng">
+                                              <Trash2 size={16} />
+                                            </button>
+                                          )}
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  ))
+                                ) : (
+                                  <tr>
+                                    <td colSpan={14} className="px-4 py-12 text-center text-gray-400 text-[12px]">
+                                      <div className="flex flex-col items-center gap-2">
+                                        <Package size={24} className="opacity-20" />
+                                        <span>Chưa có dữ liệu sản phẩm trong đề nghị này.</span>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                )}
+                              </tbody>
+                            </table>
+                          </div>
+
+                          {mode !== "view" && (
+                            <button 
+                              onClick={() => addProduct(req.id)}
+                              className="flex items-center gap-1 text-[12px] font-bold text-[#00529C] hover:underline"
                             >
-                              Xóa bộ lọc
+                              <Plus size={14} /> Thêm sản phẩm
                             </button>
-                            <button
-                              onClick={() => setIsImportFilterOpen(false)}
-                              className="px-6 py-1.5 bg-[#00529C] text-white text-[12px] font-medium rounded-md hover:bg-[#00427D]"
-                            >
-                              Áp dụng
-                            </button>
+                          )}
+
+                          <div className="flex flex-col gap-1 items-end mt-4 pt-4 border-t border-gray-100">
+                            <div className="flex items-center gap-2 text-[12px]">
+                              <span className="text-gray-500">Tổng số lượng</span>
+                              <span className="font-bold text-[#002D56]">{req.products.reduce((acc, p) => acc + p.exportQty, 0)}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-[12px]">
+                              <span className="text-gray-500">Tổng số tiền</span>
+                              <span className="font-bold text-[#002D56]">{req.products.reduce((acc, p) => acc + (p.exportQty * p.exportPrice), 0).toLocaleString()} VND</span>
+                            </div>
                           </div>
                         </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              )}
 
-              <div className="overflow-x-auto border border-gray-200 rounded-lg max-h-[600px] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-                <table className="w-max min-w-full text-left border-separate border-spacing-0 table-fixed">
-                  <thead className="sticky top-0 z-20">
-                    <tr className="bg-[#F8FAFC]">
-                      <th
-                        style={{ width: columnWidths.id }}
-                        className="px-6 py-4 text-[12px] font-bold text-[#002B49] uppercase font-sans border-b border-gray-200 relative group bg-[#F8FAFC]"
-                      >
-                        No
-                        <div
-                          onMouseDown={(e) => startResize("id", e)}
-                          className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-[#00529C] transition-colors z-40 opacity-0 group-hover:opacity-100"
-                        />
-                      </th>
-                      {COLUMN_CONFIG.map((col) => (
-                        <th
-                          key={col.key}
-                          style={{ width: columnWidths[col.key] }}
-                          className="px-6 py-4 text-[12px] font-bold text-[#002B49] uppercase font-sans bg-[#F8FAFC] border-b border-gray-200 whitespace-nowrap relative group"
-                        >
-                          {col.label}
-                          <div
-                            onMouseDown={(e) => startResize(col.key, e)}
-                            className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-[#00529C] transition-colors z-40 opacity-0 group-hover:opacity-100"
-                          />
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {currentTableData.length > 0 ? (
-                      currentTableData.map((row) => (
-                        <tr
-                          key={row.id}
-                          className="group hover:bg-gray-50 transition-colors bg-white"
-                        >
-                          <td
-                            style={{ width: columnWidths.id }}
-                            className="px-6 py-4 text-[12px] text-gray-700 font-medium bg-white border-b border-gray-100 group-hover:bg-gray-50 overflow-hidden text-ellipsis whitespace-nowrap"
-                          >
-                            {row.id}
-                          </td>
-                          {COLUMN_CONFIG.map((col) => (
-                            <td
-                              key={col.key}
-                              style={{ width: columnWidths[col.key] }}
-                              className="px-6 py-4 text-[12px] text-gray-700 whitespace-nowrap border-b border-gray-50 overflow-hidden text-ellipsis"
-                            >
-                              {renderCell(row, col.key)}
-                            </td>
-                          ))}
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td
-                          colSpan={COLUMN_CONFIG.length + 1}
-                          className="px-6 py-20 text-center text-gray-400 text-[14px]"
-                        >
-                          Không có dữ liệu hiển thị.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                        {/* Subsection: Dữ liệu báo cáo */}
+                        <div className="space-y-4 pt-6 border-t border-gray-100">
+                          <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-2">
+                              <ChevronDown size={14} className="text-[#00529C]" />
+                              <span className="text-[13px] font-bold text-[#002D56] uppercase">
+                                Dữ liệu báo cáo
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <button onClick={() => triggerToast("Export Dữ liệu báo cáo...")} className="flex items-center gap-1.5 text-[12px] font-bold text-[#00529C] px-3 py-1.5 border border-[#00529C] rounded hover:bg-blue-50">
+                                <Download size={14} />
+                                Export
+                              </button>
+                              {mode !== "view" && (
+                                <button onClick={() => triggerToast("Import Dữ liệu báo cáo...")} className="flex items-center gap-1.5 text-[12px] font-bold text-[#00529C] px-3 py-1.5 border border-[#00529C] rounded hover:bg-blue-50">
+                                  <FilePlus size={14} />
+                                  Import
+                                </button>
+                              )}
+                            </div>
+                          </div>
 
-              {/* Pagination Footer */}
-              <div className="mt-4 flex items-center justify-between pb-2">
-                <div className="text-[12px] text-gray-500">
-                  Tổng {currentTableData.length} bản ghi
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center">
-                    <button className="p-1 px-2 text-gray-400 hover:text-gray-600 rounded-md border border-gray-200 mr-2">
-                      <ChevronLeft size={16} />
-                    </button>
-                    <button className="w-8 h-8 flex items-center justify-center rounded-md bg-[#00529C] text-white text-[12px] font-medium shadow-sm">
-                      1
-                    </button>
-                    <button className="w-8 h-8 flex items-center justify-center rounded-md text-gray-600 hover:bg-gray-100 text-[12px]">
-                      2
-                    </button>
-                    <button className="w-8 h-8 flex items-center justify-center rounded-md text-gray-600 hover:bg-gray-100 text-[12px]">
-                      3
-                    </button>
-                    <span className="px-2 text-gray-400">...</span>
-                    <button className="w-10 h-8 flex items-center justify-center rounded-md text-gray-600 hover:bg-gray-100 text-[12px]">
-                      123
-                    </button>
-                    <button className="p-1 px-2 text-gray-400 hover:text-gray-600 rounded-md border border-gray-200 ml-2">
-                      <ChevronRight size={16} />
-                    </button>
-                  </div>
-                  <div className="flex items-center gap-2 px-3 py-1.5 border border-gray-300 rounded-md text-[12px] text-gray-700 cursor-pointer hover:border-gray-400 transition-all select-none">
-                    <span>15 bản ghi/trang</span>
-                    <ChevronsUpDown size={14} className="text-gray-400" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+                          <div className="overflow-x-auto border border-gray-200 rounded-lg max-h-[400px]">
+                            <table className="w-max min-w-full text-left border-collapse table-fixed">
+                              <thead>
+                                <tr className="bg-[#F8FAFC]">
+                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[50px]">No</th>
+                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[120px]">Ngày hóa đơn</th>
+                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[150px]">Số Hóa đơn tham chiếu</th>
+                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[120px]">Mã Khách hàng</th>
+                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[150px]">Tên Khách hàng</th>
+                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[120px]">Mã sản phẩm</th>
+                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[150px]">Tên sản phẩm</th>
+                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[100px]">PS</th>
+                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[100px]">Đơn vị tính</th>
+                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[100px]">Số lượng</th>
+                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[120px]">Đơn giá</th>
+                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[120px]">Thành tiền</th>
+                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[150px]">Số SN/IMEI</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {req.reportData.length > 0 ? (
+                                  req.reportData.map((rd, rdIdx) => (
+                                    <tr key={rd.id} className="hover:bg-gray-50 border-b border-gray-100 group/row">
+                                      <td className="px-4 py-3 text-[12px] font-medium">{String(rdIdx + 1).padStart(2, '0')}</td>
+                                      <td className={`px-4 py-3 text-[12px] ${!rd.invoiceDate ? "bg-orange-50" : ""}`}>
+                                        <input type="text" value={rd.invoiceDate} readOnly={mode === "view"} onChange={(e) => updateReportData(req.id, rd.id, { invoiceDate: e.target.value })} className={`w-full bg-transparent border-none focus:ring-0 focus:outline-none p-0 text-[#00529C] ${mode === "view" ? "cursor-default" : ""}`} placeholder="DD/MM/YYYY" />
+                                      </td>
+                                      <td className={`px-4 py-3 text-[12px] ${!rd.refInvoiceNumber ? "bg-orange-50" : ""}`}>
+                                        <input type="text" value={rd.refInvoiceNumber} readOnly={mode === "view"} onChange={(e) => updateReportData(req.id, rd.id, { refInvoiceNumber: e.target.value })} className={`w-full bg-transparent border-none focus:ring-0 focus:outline-none p-0 text-[#00529C] ${mode === "view" ? "cursor-default" : ""}`} placeholder="Nhập số HĐ" />
+                                      </td>
+                                      <td className={`px-4 py-3 text-[12px] ${!rd.customerId ? "bg-orange-50" : ""}`}>
+                                        <input type="text" value={rd.customerId} readOnly={mode === "view"} onChange={(e) => updateReportData(req.id, rd.id, { customerId: e.target.value })} className={`w-full bg-transparent border-none focus:ring-0 focus:outline-none p-0 ${mode === "view" ? "cursor-default" : ""}`} placeholder="Mã KH" />
+                                      </td>
+                                      <td className={`px-4 py-3 text-[12px] ${!rd.customerName ? "bg-orange-50" : ""}`}>
+                                        <input type="text" value={rd.customerName} readOnly={mode === "view"} onChange={(e) => updateReportData(req.id, rd.id, { customerName: e.target.value })} className={`w-full bg-transparent border-none focus:ring-0 focus:outline-none p-0 ${mode === "view" ? "cursor-default" : ""}`} placeholder="Tên KH" />
+                                      </td>
+                                      <td className="px-4 py-3 text-[12px]">{rd.itemCode}</td>
+                                      <td className="px-4 py-3 text-[12px]">{rd.itemName}</td>
+                                      <td className="px-4 py-3 text-[12px]">{rd.ps}</td>
+                                      <td className="px-4 py-3 text-[12px]">{rd.unit}</td>
+                                      <td className="px-4 py-3 text-[12px]">
+                                        <input type="number" value={rd.qty} readOnly={mode === "view"} onChange={(e) => updateReportData(req.id, rd.id, { qty: Number(e.target.value), totalPrice: Number(e.target.value) * rd.unitPrice })} className={`w-full bg-transparent border-none focus:ring-0 focus:outline-none p-0 text-[#00529C] ${mode === "view" ? "cursor-default" : ""}`} />
+                                      </td>
+                                      <td className="px-4 py-3 text-[12px]">{rd.unitPrice.toLocaleString()}</td>
+                                      <td className="px-4 py-3 text-[12px] font-bold">{rd.totalPrice.toLocaleString()}</td>
+                                      <td className={`px-4 py-3 text-[12px] ${!rd.serialNumber ? "bg-orange-50" : ""}`}>
+                                        <button 
+                                          onClick={() => {
+                                            setCurrentSerialDetailRow({
+                                               id: rd.id,
+                                               itemCode: rd.itemCode,
+                                               itemName: rd.itemName,
+                                               reportQty: String(rd.qty)
+                                            } as any);
+                                            setShowSerialDetailModal(true);
+                                          }}
+                                          className="text-[#00529C] hover:underline font-medium"
+                                        >
+                                          Xem dữ liệu
+                                        </button>
+                                      </td>
+                                    </tr>
+                                  ))
+                                ) : (
+                                  <tr>
+                                    <td colSpan={13} className="px-4 py-12 text-center text-gray-400 text-[12px]">
+                                      <div className="flex flex-col items-center gap-2">
+                                        <FileText size={24} className="opacity-20" />
+                                        <span>Dữ liệu báo cáo chưa được khởi tạo. Nhấn "Tạo dữ liệu báo cáo" để bắt đầu.</span>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                )}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+
+          {mode === "create" && (
+            <button
+              onClick={addRequest}
+              className="w-full py-4 border-2 border-dashed border-[#00529C]/30 rounded-lg flex items-center justify-center gap-2 text-[#00529C] font-bold text-[14px] hover:bg-blue-50 transition-all hover:border-[#00529C]/50 bg-white shadow-sm"
+            >
+              <Plus size={18} />
+              Thêm đề nghị xuất kho mới
+            </button>
+          )}
+        </div>
 
           {/* Feedback Sections - Display in view mode */}
           {mode === "view" && (
@@ -1465,6 +1696,65 @@ export default function CreatePreReportDetail({
                           </td>
                         </tr>
                       ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Lệnh xuất báo cáo hãng section */}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mt-8">
+                <div className="px-6 py-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
+                  <h3 className="text-[16px] font-bold text-[#002D56] flex items-center gap-2">
+                    <History size={18} className="text-[#00529C]" />
+                    Lệnh xuất báo cáo hãng
+                  </h3>
+                  <span className="text-[12px] text-gray-500 italic">
+                    (Lệnh xuất báo cáo hãng được tạo ra từ đề nghị này)
+                  </span>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-[#F8FAFC] border-b border-gray-100">
+                        <th className="px-6 py-3 text-[12px] font-semibold text-[#002B49] w-12 text-center">STT</th>
+                        <th className="px-6 py-3 text-[12px] font-semibold text-[#002B49]">Mã báo cáo</th>
+                        <th className="px-6 py-3 text-[12px] font-semibold text-[#002B49]">Loại báo cáo</th>
+                        <th className="px-6 py-3 text-[12px] font-semibold text-[#002B49]">Thời gian</th>
+                        <th className="px-6 py-3 text-[12px] font-semibold text-[#002B49]">Người xuất</th>
+                        <th className="px-6 py-3 text-[12px] font-semibold text-[#002B49]">Ngày xuất</th>
+                        <th className="px-6 py-3 text-[12px] font-semibold text-[#002B49] text-center">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {brandReports.length > 0 ? (
+                        brandReports.map((report, idx) => (
+                          <tr key={report.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                            <td className="px-6 py-3 text-[13px] text-gray-500 text-center">
+                              {(idx + 1).toString().padStart(2, "0")}
+                            </td>
+                            <td className="px-6 py-3 text-[13px] font-mono text-gray-600 font-medium">{report.reportCode}</td>
+                            <td className="px-6 py-3 text-[13px] text-gray-700">{report.reportType}</td>
+                            <td className="px-6 py-3 text-[13px] text-gray-600">{report.period}</td>
+                            <td className="px-6 py-3 text-[13px] text-gray-700 font-medium">{report.exporter}</td>
+                            <td className="px-6 py-3 text-[13px] text-gray-500">{report.exportDate}</td>
+                            <td className="px-6 py-3 text-center">
+                              <button 
+                                onClick={() => triggerToast("Đang tải báo cáo...")}
+                                className="p-1.5 text-[#00529C] hover:bg-blue-50 rounded transition-colors"
+                                title="Tải về"
+                              >
+                                <Download size={16} />
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={7} className="px-6 py-8 text-center text-gray-400 text-[13px] italic">
+                            Chưa có lệnh xuất báo cáo hãng nào được tạo.
+                          </td>
+                        </tr>
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -1863,6 +2153,5 @@ export default function CreatePreReportDetail({
           )}
         </AnimatePresence>
       </div>
-    </div>
-  );
+    );
 }

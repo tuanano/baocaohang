@@ -5,26 +5,35 @@ import Sidebar from "./components/Sidebar";
 import ReportContent from "./components/ReportContent";
 import ReportRequestsList from "./components/ReportRequestsList";
 import PendingReportRequestsList from "./components/PendingReportRequestsList";
-import PreReportDetail from "./components/PreReportDetail";
 import PostReportDetail from "./components/PostReportDetail";
 import CreatePreReportDetail from "./components/CreatePreReportDetail";
 import CreatePostReportDetail from "./components/CreatePostReportDetail";
 import { INITIAL_BRAND_REPORTS, ExportRecord } from "./constants/mockData";
 
 export default function App() {
-  const [currentView, setCurrentView] = useState<'export' | 'list' | 'pending' | 'create_detail' | 'view_detail'>('export');
-  const [prevView, setPrevView] = useState<'list' | 'pending'>('list');
-  const [reportType, setReportType] = useState<'pre' | 'post'>('post');
-  const [reportCategory, setReportCategory] = useState<'quantity' | 'serial'>('quantity');
+  const [currentView, setCurrentView] = useState<
+    "export" | "list" | "pending" | "create_detail" | "view_detail"
+  >("export");
+  const [prevView, setPrevView] = useState<"list" | "pending">("list");
+  const [reportType, setReportType] = useState<"pre" | "post">("post");
+  const [reportCategory, setReportCategory] = useState<"quantity" | "serial">(
+    "quantity",
+  );
 
   // Shared state for brand reports
-  const [brandReports, setBrandReports] = useState<ExportRecord[]>(INITIAL_BRAND_REPORTS);
+  const [brandReports, setBrandReports] = useState<ExportRecord[]>(
+    INITIAL_BRAND_REPORTS,
+  );
 
-  const handleViewDetail = (type: 'pre' | 'post', category: 'quantity' | 'serial', from: 'list' | 'pending') => {
+  const handleViewDetail = (
+    type: "pre" | "post",
+    category: "quantity" | "serial",
+    from: "list" | "pending",
+  ) => {
     setReportType(type);
     setReportCategory(category);
     setPrevView(from);
-    setCurrentView('view_detail');
+    setCurrentView("view_detail");
   };
 
   return (
@@ -41,66 +50,68 @@ export default function App() {
               exit={{ opacity: 0, x: -10 }}
               transition={{ duration: 0.3, ease: "easeOut" }}
             >
-              {currentView === 'export' ? (
-                <ReportContent 
-                  brandReports={brandReports} 
-                  setBrandReports={setBrandReports} 
+              {currentView === "export" ? (
+                <ReportContent
+                  brandReports={brandReports}
+                  setBrandReports={setBrandReports}
                 />
-              ) : 
-               currentView === 'list' ? (
-                 <ReportRequestsList 
-                   onCreateDetail={(type, category) => {
-                     setReportType(type);
-                     setReportCategory(category);
-                     setCurrentView('create_detail');
-                   }} 
-                   onViewDetail={(type, category) => handleViewDetail(type, category, 'list')}
-                 />
-               ) : 
-               currentView === 'pending' ? (
-                 <PendingReportRequestsList 
-                   onViewDetail={(type, category) => handleViewDetail(type, category, 'pending')}
-                 />
-               ) :
-               currentView === 'create_detail' ? (
-                 reportType === 'pre' ? (
-                   <CreatePreReportDetail 
-                     category={reportCategory}
-                     onBack={() => setCurrentView('list')}
-                   />
-                 ) : (
-                   <CreatePostReportDetail 
-                     category={reportCategory}
-                     onBack={() => setCurrentView('list')}
-                   />
-                 )
-               ) : (
-                 reportType === 'pre' ? (
-                   <PreReportDetail
-                     type="pre"
-                     category={reportCategory}
-                     isApproveMode={prevView === 'pending'}
-                     onBack={() => setCurrentView(prevView)}
-                     brandReports={brandReports}
-                     onAddBrandReport={(report: ExportRecord) => setBrandReports(prev => [report, ...prev])}
-                     onUpdateBrandReport={(id: string, updates: Partial<ExportRecord>) => 
-                       setBrandReports(prev => prev.map(r => r.id === id ? { ...r, ...updates } : r))
-                     }
-                   />
-                 ) : (
-                   <PostReportDetail
-                     type="post"
-                     category={reportCategory}
-                     isApproveMode={prevView === 'pending'}
-                     onBack={() => setCurrentView(prevView)}
-                     brandReports={brandReports}
-                     onAddBrandReport={(report: ExportRecord) => setBrandReports(prev => [report, ...prev])}
-                     onUpdateBrandReport={(id: string, updates: Partial<ExportRecord>) => 
-                       setBrandReports(prev => prev.map(r => r.id === id ? { ...r, ...updates } : r))
-                     }
-                   />
-                 )
-               )}
+              ) : currentView === "list" ? (
+                <ReportRequestsList
+                  onCreateDetail={(type, category) => {
+                    setReportType(type);
+                    setReportCategory(category);
+                    setCurrentView("create_detail");
+                  }}
+                  onViewDetail={(type, category) =>
+                    handleViewDetail(type, category, "list")
+                  }
+                />
+              ) : currentView === "pending" ? (
+                <PendingReportRequestsList
+                  onViewDetail={(type, category) =>
+                    handleViewDetail(type, category, "pending")
+                  }
+                />
+              ) : currentView === "create_detail" ? (
+                reportType === "pre" ? (
+                  <CreatePreReportDetail
+                    category={reportCategory}
+                    onBack={() => setCurrentView("list")}
+                  />
+                ) : (
+                  <CreatePostReportDetail
+                    category={reportCategory}
+                    onBack={() => setCurrentView("list")}
+                  />
+                )
+              ) : reportType === "pre" ? (
+                <CreatePreReportDetail
+                  category={reportCategory}
+                  mode="view"
+                  isApproveMode={prevView === "pending"}
+                  onBack={() => setCurrentView(prevView)}
+                  brandReports={brandReports}
+                />
+              ) : (
+                <PostReportDetail
+                  type="post"
+                  category={reportCategory}
+                  isApproveMode={prevView === "pending"}
+                  onBack={() => setCurrentView(prevView)}
+                  brandReports={brandReports}
+                  onAddBrandReport={(report: ExportRecord) =>
+                    setBrandReports((prev) => [report, ...prev])
+                  }
+                  onUpdateBrandReport={(
+                    id: string,
+                    updates: Partial<ExportRecord>,
+                  ) =>
+                    setBrandReports((prev) =>
+                      prev.map((r) => (r.id === id ? { ...r, ...updates } : r)),
+                    )
+                  }
+                />
+              )}
             </motion.div>
           </AnimatePresence>
         </main>

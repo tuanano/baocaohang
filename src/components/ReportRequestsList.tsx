@@ -286,10 +286,9 @@ export default function ReportRequestsList({
   );
 
   const isCreateFormValid =
-    form.reportMethod &&
-    form.startDate &&
-    form.endDate &&
-    (form.reportMethod !== "Báo cáo trước" || form.xknb);
+    form.reportMethod === "Báo cáo trước"
+      ? !!form.reportMethod
+      : !!(form.reportMethod === "Báo cáo sau" && form.startDate && form.endDate);
 
   return (
     <div className="p-6 flex-1 bg-[#F5F7F9] relative min-h-full">
@@ -353,30 +352,54 @@ export default function ReportRequestsList({
                     />
                   </div>
 
-                  <FilterField
-                    label="Thời gian giao dịch (Từ ngày)"
-                    placeholder="DD/MM/YYYY"
-                    value={form.startDate}
-                    onChange={(val: string) =>
-                      setForm({ ...form, startDate: val })
-                    }
-                    isDate
-                    required
-                  />
-                  <FilterField
-                    label="Thời gian giao dịch (Đến ngày)"
-                    placeholder="DD/MM/YYYY"
-                    value={form.endDate}
-                    onChange={(val: string) =>
-                      setForm({ ...form, endDate: val })
-                    }
-                    isDate
-                    required
-                  />
-
-                  {/* Conditional Field: Show when "Báo cáo trước" is selected */}
                   <AnimatePresence>
-                    {form.reportMethod === "Báo cáo trước" && (
+                    {form.reportMethod !== "Báo cáo trước" && (
+                      <>
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          className="col-span-1 overflow-hidden"
+                        >
+                          <FilterField
+                            label="Thời gian giao dịch (Từ ngày)"
+                            placeholder="DD/MM/YYYY"
+                            value={form.startDate}
+                            onChange={(val: string) =>
+                              setForm({ ...form, startDate: val })
+                            }
+                            isDate
+                            required
+                          />
+                        </motion.div>
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          className="col-span-1 overflow-hidden"
+                        >
+                          <FilterField
+                            label="Thời gian giao dịch (Đến ngày)"
+                            placeholder="DD/MM/YYYY"
+                            value={form.endDate}
+                            onChange={(val: string) =>
+                              setForm({ ...form, endDate: val })
+                            }
+                            isDate
+                            required
+                          />
+                        </motion.div>
+                      </>
+                    )}
+                  </AnimatePresence>
+
+                  {/* Conditional Field: Show when "Báo cáo sau" is selected AND maybe other conditions?
+                      The user wants to REMOVE xknb for "Báo cáo trước".
+                      Current logic showed it ONLY for "Báo cáo trước".
+                      We will now hide it if "Báo cáo trước" is selected.
+                  */}
+                  <AnimatePresence>
+                    {form.reportMethod === "Báo cáo sau" && (
                       <motion.div
                         initial={{ height: 0, opacity: 0, marginTop: 0 }}
                         animate={{ height: "auto", opacity: 1, marginTop: 0 }}
