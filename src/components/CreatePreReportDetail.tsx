@@ -141,31 +141,17 @@ const COLUMN_CONFIG_BASE: { key: keyof TableRow; label: string }[] = [
   { key: "reportInvoiceDate", label: "Invoice Date" },
   { key: "reportInvoiceNumber", label: "Invoice Number" },
   { key: "reportQty", label: "Qty" },
-  { key: "poNumber", label: "PO number" },
-  { key: "poUnitCost", label: "PO Unit cost" },
-  { key: "currencyCode", label: "Currency Code" },
-  { key: "unitCost", label: "Unit cost" },
-  { key: "totalCost", label: "Total Cost" },
-  { key: "unitPrice", label: "Đơn giá bán" },
-  { key: "revenue", label: "Doanh thu" },
-  { key: "billToLocationId", label: "Bill To Location_ID" },
   { key: "billToLocation", label: "Bill To Location" },
   { key: "billToAddress", label: "Bill To Address" },
-  { key: "zipCode", label: "ZIP Code" },
-  { key: "city", label: "Tỉnh thành" },
-  { key: "country", label: "Quốc gia" },
-  { key: "shipToLocationId", label: "Ship To Location_ID" },
+  { key: "zipCode", label: "ZIP Code (Bill)" },
+  { key: "city", label: "Tỉnh thành (Bill)" },
+  { key: "country", label: "Quốc gia (Bill)" },
   { key: "shipToLocation", label: "Ship To Location" },
   { key: "shipToAddress", label: "Ship To Address" },
-  { key: "shipToZipCode", label: "ZIP Code" },
-  { key: "shipToCity", label: "Tỉnh thành" },
-  { key: "shipToCountry", label: "Quốc gia" },
-  { key: "bidNumber", label: "Số BID (báo cáo dữ liệu tổng hợp)" },
-  { key: "endUserName", label: "Tên_ End user" },
-  { key: "endUserAddress", label: "Địa chỉ_ End user" },
-  { key: "endUserCity", label: "Tỉnh thành_ End user" },
-  { key: "endUserCountry", label: "Quốc gia_ End user" },
-  { key: "endUserZipCode", label: "Zip_code_End_user" },
+  { key: "shipToZipCode", label: "ZIP Code (Ship)" },
+  { key: "shipToCity", label: "Tỉnh thành (Ship)" },
+  { key: "shipToCountry", label: "Quốc gia (Ship)" },
+  { key: "poNumber", label: "PO number" },
   // Dynamic columns will be inserted here
   { key: "transactionNumber", label: "Số giao dịch" },
   { key: "transactionDate", label: "Ngày giao dịch" },
@@ -173,8 +159,8 @@ const COLUMN_CONFIG_BASE: { key: keyof TableRow; label: string }[] = [
 ];
 
 const mockCommonFields = {
-  brandVendor: "Apple",
-  comName: "FDCHN",
+  brandVendor: "XIAOMI",
+  comName: "FDC HN",
   geo: "HN",
   reportCustomerId: "219748",
   reportCustomerName: "CÔNG TY TNHH CÔNG NGHỆ HÀ DUY",
@@ -185,26 +171,26 @@ const mockCommonFields = {
   invtOrgName: "Kho khác HN",
   invtSubCode: "111000000",
   invtSubName: "Kho hang nhap khau HCM",
-  brand: "APPLE",
-  ps: "SMART PHONE",
-  itemCode: "71084507",
-  partNumber: "MG6L4ZP/A",
-  itemName: "Điện thoại iPhone 17 256GB Xanh Lam Khói MG6L4ZP/A",
-  model: "iPhone 17",
-  color: "Blue Titanium",
-  cpuBrand: "APPLE",
-  cpuModel: "A17 Pro",
-  osType: "iOS",
+  brand: "XIAOMI",
+  ps: "SMART PHONE XIAOMI",
+  itemCode: "70281468",
+  partNumber: "MZB0ARHEU",
+  itemName: "Điện thoại di động Redmi Note 11 Pro Polar White 8GB RAM 128GB ROM (2201116TG)_MZB0ARHEU",
+  model: "Redmi Note 11 Pro",
+  color: "Polar White",
+  cpuBrand: "MediaTek",
+  cpuModel: "Helio G96",
+  osType: "Android",
   reportInvoiceDate: "25/03/2026",
   reportInvoiceNumber: "167285",
   reportQty: "10",
-  poNumber: "PO-ADG-2026-001",
-  poUnitCost: "28,000,000",
+  poNumber: "PO-XIAOMI-2026-001",
+  poUnitCost: "6,000,000",
   currencyCode: "VND",
-  unitCost: "29,000,000",
-  totalCost: "290,000,000",
-  unitPrice: "34,990,000",
-  revenue: "349,900,000",
+  unitCost: "6,200,000",
+  totalCost: "62,000,000",
+  unitPrice: "7,490,000",
+  revenue: "74,900,000",
   billToLocationId: "LOC-HCM-01",
   billToLocation: "HCM Dist 1",
   billToAddress: "123 Le Loi, HCM",
@@ -217,7 +203,7 @@ const mockCommonFields = {
   shipToZipCode: "700000",
   shipToCity: "HCM",
   shipToCountry: "VN",
-  bidNumber: "BID-APPLE-2026",
+  bidNumber: "BID-XIAOMI-2026",
   endUserName: "Nguyen Van A",
   endUserAddress: "456 Tran Hung Dao, HCM",
   endUserCity: "HCM",
@@ -271,6 +257,16 @@ interface InventoryReportData {
   refInvoiceNumber: string;
   customerId: string;
   customerName: string;
+  billToLocation: string;
+  billToAddress: string;
+  zipCode: string;
+  city: string;
+  country: string;
+  shipToLocation: string;
+  shipToAddress: string;
+  shipToZipCode: string;
+  shipToCity: string;
+  shipToCountry: string;
   itemCode: string;
   itemName: string;
   ps: string;
@@ -290,6 +286,7 @@ interface InventoryRequest {
   company: string;
   businessCenter: string;
   salesTeam: string;
+  accountingDate: string;
   orgExport: string;
   warehouseExport: string;
   storekeeperExport: string;
@@ -316,19 +313,31 @@ interface InventoryRequest {
 
 export default function CreatePreReportDetail({
   category,
-  mode = "create",
+  mode: initialMode = "create",
   isApproveMode = false,
   onBack,
+  onTypeChange,
+  onCategoryChange,
   brandReports = [],
 }: {
   category: "quantity" | "serial";
   mode?: "create" | "view";
   isApproveMode?: boolean;
   onBack: () => void;
+  onTypeChange?: (type: "pre" | "post") => void;
+  onCategoryChange?: (cat: "quantity" | "serial") => void;
   brandReports?: any[];
 }) {
+  const [localMode, setLocalMode] = useState(initialMode);
+  const [showApproveConfirm, setShowApproveConfirm] = useState(false);
+  const [showRejectConfirm, setShowRejectConfirm] = useState(false);
+  const [reason, setReason] = useState("");
+  const [reportDates, setReportDates] = useState({
+    startDate: "",
+    endDate: "",
+  });
   const [inventoryRequests, setInventoryRequests] = useState<InventoryRequest[]>(
-    mode === "view"
+    initialMode === "view"
       ? [
           {
             id: "REQ_001",
@@ -336,15 +345,16 @@ export default function CreatePreReportDetail({
             type: "Xuất bán trả chậm",
             formNumber: "FORM_001",
             symbol: "SYM_001",
-            company: "FPT Retail",
-            businessCenter: "Trung tâm 1",
-            salesTeam: "Team A",
-            orgExport: "Kho tổng HN",
-            warehouseExport: "Kho 1",
-            storekeeperExport: "Nguyễn Văn A",
-            orgImport: "Kho chi nhánh HCM",
-            warehouseImport: "Kho 2",
-            storekeeperImport: "Trần Thị B",
+            company: "FDCHN",
+            businessCenter: "FHO Other HN",
+            salesTeam: "FHO Other",
+            accountingDate: "2026-05-15",
+            orgExport: "A77 - Kho ban HN",
+            warehouseExport: "Kho hang ban - TSGX - HN",
+            storekeeperExport: "haitp - Hai",
+            orgImport: "A80 - Kho khac HN",
+            warehouseImport: "Kho hang du an - HN",
+            storekeeperImport: "haitp - Hai",
             deliveryAddress: "261 Cầu Giấy, Hà Nội",
             deliveryMethod: "Vận chuyển",
             hasDelivery: true,
@@ -361,15 +371,15 @@ export default function CreatePreReportDetail({
             isB2B: true,
             products: [
               {
-                id: "PROD_MOCK_1",
-                itemCode: "IP15",
-                itemName: "iPhone 15 128GB",
-                ps: "SMARTPHONE",
+                id: "P1",
+                itemCode: "70281468",
+                itemName: "Điện thoại di động Redmi Note 11 Pro Polar White 8GB RAM 128GB ROM (2201116TG)_MZB0ARHEU",
+                ps: "SPXMI - SMART PHONE XIAOMI",
                 unit: "Chiếc",
                 inventoryQty: 100,
-                exportQty: 10,
-                exportPrice: 19990000,
-                totalPrice: 199900000,
+                exportQty: 5,
+                exportPrice: 6200000,
+                totalPrice: 31000000,
                 serialNumberExport: "---",
                 exportedQty: 0,
                 serialNumberImport: "---",
@@ -377,37 +387,180 @@ export default function CreatePreReportDetail({
                 storageQty: 100,
               },
               {
-                id: "PROD_MOCK_2",
-                itemCode: "MACM3",
-                itemName: "MacBook Pro M3",
-                ps: "LAPTOP",
+                id: "P2",
+                itemCode: "71055945",
+                itemName: "Điện thoại di động Redmi Note 14 Mist Purple 8 RAM 256 ROM 24117RN76O_MZB0JMOEU",
+                ps: "SPXMI - SMART PHONE XIAOMI",
                 unit: "Chiếc",
                 inventoryQty: 50,
-                exportQty: 5,
-                exportPrice: 39990000,
-                totalPrice: 199950000,
+                exportQty: 2,
+                exportPrice: 8500000,
+                totalPrice: 17000000,
                 serialNumberExport: "---",
                 exportedQty: 0,
                 serialNumberImport: "---",
                 importedQty: 0,
                 storageQty: 50,
               },
+              {
+                id: "P3",
+                itemCode: "70284599",
+                itemName: "Điện thoại di động Redmi Note 11 Pro+ 5G Forest Green 8GB RAM 256GB ROM (21091116UG)_MZB0AGEEU",
+                ps: "SPXMI - SMART PHONE XIAOMI",
+                unit: "Chiếc",
+                inventoryQty: 30,
+                exportQty: 0,
+                exportPrice: 9500000,
+                totalPrice: 0,
+                serialNumberExport: "---",
+                exportedQty: 0,
+                serialNumberImport: "---",
+                importedQty: 0,
+                storageQty: 30,
+              },
+              {
+                id: "P4",
+                itemCode: "71055948",
+                itemName: "Điện thoại di động Redmi Note 14 pro Midnight Black 8G RAM 256G ROM 24116RACCG_MZB0ID4EU",
+                ps: "SPXMI - SMART PHONE XIAOMI",
+                unit: "Chiếc",
+                inventoryQty: 45,
+                exportQty: 0,
+                exportPrice: 8900000,
+                totalPrice: 0,
+                serialNumberExport: "---",
+                exportedQty: 0,
+                serialNumberImport: "---",
+                importedQty: 0,
+                storageQty: 45,
+              },
+              {
+                id: "P5",
+                itemCode: "71055942",
+                itemName: "Điện thoại di động Redmi Note 14 Lime Green 8 RAM 128 ROM 24117RN76O_MZB0J0XEU",
+                ps: "SPXMI - SMART PHONE XIAOMI",
+                unit: "Chiếc",
+                inventoryQty: 60,
+                exportQty: 0,
+                exportPrice: 7200000,
+                totalPrice: 0,
+                serialNumberExport: "---",
+                exportedQty: 0,
+                serialNumberImport: "---",
+                importedQty: 0,
+                storageQty: 60,
+              },
+              {
+                id: "P6",
+                itemCode: "71055944",
+                itemName: "Điện thoại di động Redmi Note 14 Midnight Black 8 RAM 256 ROM 24117RN76O_MZB0J11EU",
+                ps: "SPXMI - SMART PHONE XIAOMI",
+                unit: "Chiếc",
+                inventoryQty: 40,
+                exportQty: 0,
+                exportPrice: 8500000,
+                totalPrice: 0,
+                serialNumberExport: "---",
+                exportedQty: 0,
+                serialNumberImport: "---",
+                importedQty: 0,
+                storageQty: 40,
+              },
+              {
+                id: "P7",
+                itemCode: "71063705",
+                itemName: "Điện thoại di động Redmi Note 14 5G Lavender Purple 8G RAM 256G ROM (6932554431228)",
+                ps: "SPXMV - SMART PHONE XIAOMI VN",
+                unit: "Chiếc",
+                inventoryQty: 25,
+                exportQty: 0,
+                exportPrice: 7900000,
+                totalPrice: 0,
+                serialNumberExport: "---",
+                exportedQty: 0,
+                serialNumberImport: "---",
+                importedQty: 0,
+                storageQty: 25,
+              },
+              {
+                id: "P8",
+                itemCode: "71029611",
+                itemName: "Điện thoại di động Redmi Note 13 Pro+ 5G Midnight Black 8GB RAM 256GB ROM (23090RA98G)_MZB0FFHEU",
+                ps: "SPXMI - SMART PHONE XIAOMI",
+                unit: "Chiếc",
+                inventoryQty: 15,
+                exportQty: 0,
+                exportPrice: 10500000,
+                totalPrice: 0,
+                serialNumberExport: "---",
+                exportedQty: 0,
+                serialNumberImport: "---",
+                importedQty: 0,
+                storageQty: 15,
+              },
+              {
+                id: "P9",
+                itemCode: "71084966",
+                itemName: "Điện thoại di động Redmi Note 15 5G Mist Purple 6G RAM 128G ROM (6932554469641)",
+                ps: "SPXMV - SMART PHONE XIAOMI VN",
+                unit: "Chiếc",
+                inventoryQty: 55,
+                exportQty: 0,
+                exportPrice: 6500000,
+                totalPrice: 0,
+                serialNumberExport: "---",
+                exportedQty: 0,
+                serialNumberImport: "---",
+                importedQty: 0,
+                storageQty: 55,
+              },
+              {
+                id: "P10",
+                itemCode: "71084965",
+                itemName: "Điện thoại di động Redmi Note 15 5G Black 6G RAM 128G ROM (6932554469634)",
+                ps: "SPXMV - SMART PHONE XIAOMI VN",
+                unit: "Chiếc",
+                inventoryQty: 80,
+                exportQty: 0,
+                exportPrice: 6500000,
+                totalPrice: 0,
+                serialNumberExport: "---",
+                exportedQty: 0,
+                serialNumberImport: "---",
+                importedQty: 0,
+                storageQty: 80,
+              },
             ],
             reportData: [
               {
-                id: "RD_MOCK_1",
+                id: "RD_1",
                 invoiceDate: "10/05/2026",
                 refInvoiceNumber: "INV_998877",
-                customerId: "CUS123",
-                customerName: "Công ty Đối tác X",
-                itemCode: "IP15",
-                itemName: "iPhone 15 128GB",
-                ps: "SMARTPHONE",
+                customerId: "219748",
+                customerName: "CÔNG TY TNHH CÔNG NGHỆ HÀ DUY",
+                itemCode: "70281468",
+                itemName: "Điện thoại di động Redmi Note 11 Pro Polar White 8GB RAM 128GB ROM (2201116TG)_MZB0ARHEU",
+                ps: "SPXMI - SMART PHONE XIAOMI",
                 unit: "Chiếc",
-                qty: 10,
-                unitPrice: 19990000,
-                totalPrice: 199900000,
-                serialNumber: "SN_IP15_MOCK_001...",
+                qty: 5,
+                unitPrice: 6200000,
+                totalPrice: 31000000,
+                serialNumber: "863451234567891, 863451234567892, 863451234567893, 863451234567894, 863451234567895",
+              },
+              {
+                id: "RD_2",
+                invoiceDate: "11/05/2026",
+                refInvoiceNumber: "INV_998878",
+                customerId: "219748",
+                customerName: "CÔNG TY TNHH CÔNG NGHỆ HÀ DUY",
+                itemCode: "71055945",
+                itemName: "Điện thoại di động Redmi Note 14 Mist Purple 8 RAM 256 ROM 24117RN76O_MZB0JMOEU",
+                ps: "SPXMI - SMART PHONE XIAOMI",
+                unit: "Chiếc",
+                qty: 2,
+                unitPrice: 8500000,
+                totalPrice: 17000000,
+                serialNumber: "863451234567896, 863451234567897",
               },
             ],
           },
@@ -419,15 +572,16 @@ export default function CreatePreReportDetail({
             type: "",
             formNumber: "",
             symbol: "",
-            company: "",
-            businessCenter: "",
-            salesTeam: "",
-            orgExport: "",
-            warehouseExport: "",
-            storekeeperExport: "",
-            orgImport: "",
-            warehouseImport: "",
-            storekeeperImport: "",
+            company: "FDCHN",
+            businessCenter: "FHO Other HN",
+            salesTeam: "FHO Other",
+            accountingDate: "2026-05-15",
+            orgExport: "A77 - Kho ban HN",
+            warehouseExport: "Kho hang ban - TSGX - HN",
+            storekeeperExport: "haitp - Hai",
+            orgImport: "A80 - Kho khac HN",
+            warehouseImport: "Kho hang du an - HN",
+            storekeeperImport: "haitp - Hai",
             deliveryAddress: "",
             deliveryMethod: "",
             hasDelivery: false,
@@ -457,15 +611,16 @@ export default function CreatePreReportDetail({
         type: "",
         formNumber: "",
         symbol: "",
-        company: "",
-        businessCenter: "",
-        salesTeam: "",
-        orgExport: "",
-        warehouseExport: "",
-        storekeeperExport: "",
-        orgImport: "",
-        warehouseImport: "",
-        storekeeperImport: "",
+        company: "FDCHN",
+        businessCenter: "FHO Other HN",
+        salesTeam: "FHO Other",
+        accountingDate: "2026-05-15",
+        orgExport: "A77 - Kho ban HN",
+        warehouseExport: "Kho hang ban - TSGX - HN",
+        storekeeperExport: "haitp - Hai",
+        orgImport: "A80 - Kho khac HN",
+        warehouseImport: "Kho hang du an - HN",
+        storekeeperImport: "haitp - Hai",
         deliveryAddress: "",
         deliveryMethod: "",
         hasDelivery: false,
@@ -504,40 +659,48 @@ export default function CreatePreReportDetail({
     );
   };
 
-  const addProduct = (requestId: string) => {
-    const mockData = [
-      { itemCode: "IP15", itemName: "iPhone 15 128GB", ps: "SMARTPHONE", unit: "Chiếc", exportPrice: 19990000 },
-      { itemCode: "IP15P", itemName: "iPhone 15 Pro 256GB", ps: "SMARTPHONE", unit: "Chiếc", exportPrice: 28990000 },
-      { itemCode: "S24U", itemName: "Galaxy S24 Ultra", ps: "SMARTPHONE", unit: "Chiếc", exportPrice: 29990000 },
-      { itemCode: "MACM2", itemName: "MacBook Air M2", ps: "LAPTOP", unit: "Chiếc", exportPrice: 24990000 },
-      { itemCode: "MACM3", itemName: "MacBook Pro M3", ps: "LAPTOP", unit: "Chiếc", exportPrice: 39990000 },
-      { itemCode: "AW9", itemName: "Apple Watch Series 9", ps: "WATCH", unit: "Chiếc", exportPrice: 10990000 },
-      { itemCode: "AIP3", itemName: "AirPods Pro 2", ps: "ACCESSORY", unit: "Chiếc", exportPrice: 5990000 },
-      { itemCode: "IPMN", itemName: "iPad Mini 6", ps: "TABLET", unit: "Chiếc", exportPrice: 12990000 },
-      { itemCode: "IPDA", itemName: "iPad Air 5", ps: "TABLET", unit: "Chiếc", exportPrice: 15990000 },
-      { itemCode: "LGT1", itemName: "Logitech MX Master 3S", ps: "ACCESSORY", unit: "Chiếc", exportPrice: 2490000 },
-    ];
+  const [importConfig, setImportConfig] = useState<{
+    requestId: string;
+    section: "products" | "report";
+  } | null>(null);
 
+  const addProduct = (requestId: string) => {
     setInventoryRequests((prev) =>
       prev.map((r) => {
         if (r.id === requestId) {
-          const newProducts: InventoryProduct[] = mockData.map((m, idx) => ({
-            id: `PROD_${Date.now()}_${idx}`,
-            itemCode: m.itemCode,
-            itemName: m.itemName,
-            ps: m.ps,
-            unit: m.unit,
-            inventoryQty: 100,
-            exportQty: 1 + idx,
-            exportPrice: m.exportPrice,
-            totalPrice: (1 + idx) * m.exportPrice,
+          const newProduct: InventoryProduct = {
+            id: `PROD_${Date.now()}`,
+            itemCode: "",
+            itemName: "",
+            ps: "",
+            unit: "Chiếc",
+            inventoryQty: 0,
+            exportQty: 0,
+            exportPrice: 0,
+            totalPrice: 0,
             serialNumberExport: "---",
             exportedQty: 0,
             serialNumberImport: "---",
             importedQty: 0,
             storageQty: 0,
-          }));
-          return { ...r, products: [...r.products, ...newProducts] };
+          };
+          return { ...r, products: [...r.products, newProduct] };
+        }
+        return r;
+      })
+    );
+  };
+
+  const updateProduct = (requestId: string, productId: string, updates: Partial<InventoryProduct>) => {
+    setInventoryRequests((prev) =>
+      prev.map((r) => {
+        if (r.id === requestId) {
+          return {
+            ...r,
+            products: r.products.map((p) =>
+              p.id === productId ? { ...p, ...updates } : p
+            ),
+          };
         }
         return r;
       })
@@ -621,7 +784,7 @@ export default function CreatePreReportDetail({
   const [importStatus, setImportStatus] = useState<
     "idle" | "uploading" | "error"
   >("idle");
-  const [hasImportedData, setHasImportedData] = useState(mode === "view");
+  const [hasImportedData, setHasImportedData] = useState(initialMode === "view");
   const [didFreshImport, setDidFreshImport] = useState(false);
 
   // Advanced Filter State - Ledger
@@ -931,9 +1094,68 @@ export default function CreatePreReportDetail({
       if (status === "success") {
         setImportStatus("idle");
         setShowImportModal(false);
-        setHasImportedData(true);
-        setDidFreshImport(true);
-        setActiveTab("import");
+        
+        if (importConfig) {
+          const { requestId, section } = importConfig;
+          setInventoryRequests((prev) =>
+            prev.map((r) => {
+              if (r.id === requestId) {
+                if (section === "products") {
+                  const mockData = [
+                    { itemCode: "70281468", itemName: "Điện thoại di động Redmi Note 11 Pro Polar White 8GB RAM 128GB ROM (2201116TG)_MZB0ARHEU", ps: "SPXMI - SMART PHONE XIAOMI", unit: "Chiếc", exportPrice: 6200000 },
+                    { itemCode: "71055945", itemName: "Điện thoại di động Redmi Note 14 Mist Purple 8 RAM 256 ROM 24117RN76O_MZB0JMOEU", ps: "SPXMI - SMART PHONE XIAOMI", unit: "Chiếc", exportPrice: 8500000 },
+                    { itemCode: "70284599", itemName: "Điện thoại di động Redmi Note 11 Pro+ 5G Forest Green 8GB RAM 256GB ROM (21091116UG)_MZB0AGEEU", ps: "SPXMI - SMART PHONE XIAOMI", unit: "Chiếc", exportPrice: 9500000 },
+                  ];
+                  const newProducts: InventoryProduct[] = mockData.map((m, idx) => ({
+                    id: `PROD_IMPORT_${Date.now()}_${idx}`,
+                    itemCode: m.itemCode,
+                    itemName: m.itemName,
+                    ps: m.ps,
+                    unit: m.unit,
+                    inventoryQty: 100,
+                    exportQty: 5 + idx,
+                    exportPrice: m.exportPrice,
+                    totalPrice: (5 + idx) * m.exportPrice,
+                    serialNumberExport: "---",
+                    exportedQty: 0,
+                    serialNumberImport: "---",
+                    importedQty: 0,
+                    storageQty: 0,
+                  }));
+                  return { ...r, products: [...r.products, ...newProducts] };
+                } else if (section === "report") {
+                  return {
+                    ...r,
+                    reportData: r.reportData.map((rd) => ({
+                      ...rd,
+                      invoiceDate: "17/05/2026",
+                      refInvoiceNumber: "INV-998877",
+                      customerId: "219748",
+                      customerName: "CÔNG TY TNHH CÔNG NGHỆ HÀ DUY",
+                      billToLocation: "LOC-HCM-01",
+                      billToAddress: "123 Le Loi, HCM",
+                      zipCode: "700000",
+                      city: "HCM",
+                      country: "VN",
+                      shipToLocation: "LOC-HCM-01",
+                      shipToAddress: "123 Le Loi, HCM",
+                      shipToZipCode: "700000",
+                      shipToCity: "HCM",
+                      shipToCountry: "VN",
+                      serialNumber: "863451234567891, 863451234567892, 863451234567893, 863451234567894, 863451234567895",
+                    })),
+                  };
+                }
+              }
+              return r;
+            })
+          );
+          setImportConfig(null);
+        } else {
+          setHasImportedData(true);
+          setDidFreshImport(true);
+          setActiveTab("import");
+        }
         triggerToast("Import dữ liệu thành công!");
       } else {
         setImportStatus("error");
@@ -1064,7 +1286,7 @@ export default function CreatePreReportDetail({
     { id: "confirmed", label: "Đã xác nhận" },
   ];
 
-  const currentStatus = mode === "create" ? "draft" : "bd_pending";
+  const currentStatus = localMode === "create" ? "draft" : "bd_pending";
 
   const FilterField = ({
     label,
@@ -1084,22 +1306,24 @@ export default function CreatePreReportDetail({
             <input
               type="date"
               value={value}
-              readOnly={mode === "view"}
+              readOnly={isView}
               onChange={(e) => onChange(e.target.value)}
-              className={`w-full px-3 py-1.5 bg-white border border-gray-300 rounded text-[12px] focus:outline-none focus:ring-1 focus:ring-[#00529C] focus:border-[#00529C] appearance-none ${mode === "view" ? "bg-gray-50 cursor-not-allowed" : ""}`}
+              className={`w-full px-3 py-1.5 bg-white border border-gray-300 rounded text-[12px] focus:outline-none focus:ring-1 focus:ring-[#00529C] focus:border-[#00529C] appearance-none ${isView ? "bg-gray-50 cursor-not-allowed" : ""}`}
             />
-            <Calendar
-              size={14}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-            />
+            {!isView && (
+              <Calendar
+                size={14}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+              />
+            )}
           </div>
         ) : options ? (
           <div className="relative group">
             <select
               value={value}
-              disabled={mode === "view"}
+              disabled={isView}
               onChange={(e) => onChange(e.target.value)}
-              className={`w-full px-3 py-1.5 bg-white border border-gray-300 rounded text-[12px] focus:outline-none focus:ring-1 focus:ring-[#00529C] focus:border-[#00529C] appearance-none ${!value ? "text-gray-400" : "text-gray-900"} ${mode === "view" ? "bg-gray-50 cursor-not-allowed" : ""}`}
+              className={`w-full px-3 py-1.5 bg-white border border-gray-300 rounded text-[12px] focus:outline-none focus:ring-1 focus:ring-[#00529C] focus:border-[#00529C] appearance-none ${!value ? "text-gray-400" : "text-gray-900"} ${isView ? "bg-gray-50 cursor-not-allowed" : ""}`}
             >
               <option value="">{placeholder}</option>
               {options.map((opt: any) => (
@@ -1109,19 +1333,19 @@ export default function CreatePreReportDetail({
               ))}
             </select>
             {!isView && (
-               <ChevronDown
-                  size={14}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-                />
+              <ChevronDown
+                size={14}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+              />
             )}
           </div>
         ) : (
           <input
             type="text"
             value={value}
-            readOnly={mode === "view"}
+            readOnly={isView}
             onChange={(e) => onChange(e.target.value)}
-            className={`w-full px-3 py-1.5 bg-white border border-gray-300 rounded text-[12px] focus:outline-none focus:ring-1 focus:ring-[#00529C] focus:border-[#00529C] ${mode === "view" ? "bg-gray-50 cursor-not-allowed" : ""}`}
+            className={`w-full px-3 py-1.5 bg-white border border-gray-300 rounded text-[12px] focus:outline-none focus:ring-1 focus:ring-[#00529C] focus:border-[#00529C] ${isView ? "bg-gray-50 cursor-not-allowed font-medium text-gray-700" : ""}`}
             placeholder={placeholder}
           />
         )}
@@ -1129,10 +1353,10 @@ export default function CreatePreReportDetail({
     </div>
   );
 
-  const isView = mode === "view";
+  const isView = localMode === "view";
 
   const showActionColumn =
-    mode === "create" || (isApproveMode && didFreshImport);
+    localMode === "create" || (isApproveMode && didFreshImport);
 
   return (
     <div className="flex flex-col min-h-screen bg-[#F1F5F9]">
@@ -1156,116 +1380,164 @@ export default function CreatePreReportDetail({
           </div>
 
           <div className="flex justify-between items-start pt-2">
-            <div className="space-y-6">
-              <h1 className="text-[28px] font-bold text-[#002D56] font-sans tracking-tight leading-tight">
-                {mode === "create" ? "Tạo mới" : "Chi tiết"} đề nghị báo cáo{" "}
-                {type === "pre" ? "(trước)" : "(sau)"}
+            <div>
+              <h1 className="text-[24px] font-bold text-[#002D56] font-sans tracking-tight leading-tight mb-4">
+                Chi tiết đề nghị báo cáo (Báo cáo trước)
               </h1>
-
-              {mode !== "create" && (
-                <div className="space-y-3 mt-4">
-                  <div className="flex items-center gap-3 text-[15px]">
-                    <span className="text-[#64748B]">
-                      Số phiếu đề nghị báo cáo
-                    </span>
-                    <span className="text-[#00529C] font-bold text-[16px]">
-                      DNBC26_0123456
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-12 text-[15px]">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[#64748B]">Người tạo đơn</span>
-                      <span className="font-bold text-[#334155]">admin</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[#64748B]">Trung tâm kinh doanh</span>
-                      <span className="font-bold text-[#334155]">
-                        FHO Other HN
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[#64748B]">Ngày tạo</span>
-                      <span className="font-bold text-[#334155]">23/04/2026</span>
-                    </div>
-                  </div>
+              
+              <div className="space-y-1 mt-4 p-4 rounded bg-white">
+                <div className="flex items-center gap-6">
+                   <div className="text-[14px]">Người tạo: <span className="font-bold">trangntt299</span></div>
+                   <div className="text-[14px]">Ngày tạo: <span className="font-bold">29/04/2026 08:56</span></div>
                 </div>
-              )}
+                <div className="text-[14px]">Số đề nghị: <span className="font-bold">DNBC26_0123456</span></div>
+              </div>
             </div>
 
-            <div className="flex flex-col items-end gap-6">
-              <button
-                onClick={onBack}
-                className="flex items-center gap-2 text-gray-400 hover:text-[#00529C] transition-colors w-fit group"
-              >
-                <ChevronLeft
-                  size={18}
-                  className="group-hover:-translate-x-1 transition-transform"
-                />
-                <span className="text-[13px] font-medium">
-                  Quay lại danh sách
-                </span>
-              </button>
+            <div className="flex items-center gap-3">
+              {localMode === "view" && isApproveMode && (
+                <>
+                  <button
+                    onClick={() => setLocalMode("create")}
+                    className="px-5 py-2.5 border border-[#00529C] text-[#00529C] rounded-lg text-[14px] font-bold hover:bg-blue-50 transition-all flex items-center gap-2 shadow-sm"
+                  >
+                    <Edit2 size={16} />
+                    Điều chỉnh
+                  </button>
+                  <button
+                    onClick={() => setShowRejectConfirm(true)}
+                    className="px-5 py-2.5 border border-red-500 text-red-500 rounded-lg text-[14px] font-bold hover:bg-red-50 transition-all flex items-center gap-2 shadow-sm"
+                  >
+                    <XCircle size={16} />
+                    Từ chối
+                  </button>
+                  <button
+                    onClick={() => setShowApproveConfirm(true)}
+                    className="px-8 py-2.5 bg-[#00529C] text-white rounded-lg text-[14px] font-bold hover:bg-[#00427D] transition-all flex items-center gap-2 shadow-md hover:shadow-lg"
+                  >
+                    <CheckCircle2 size={16} />
+                    Phê duyệt
+                  </button>
+                </>
+              )}
 
-              <div className="flex items-center gap-3">
-                {mode === "create" ? (
-                  <>
-                    <button
-                      onClick={() =>
-                        handleActionWithBack("Lưu dự thảo thành công!")
-                      }
-                      className="px-5 py-2.5 border border-[#00529C] text-[#00529C] rounded-lg text-[14px] font-bold hover:bg-blue-50 transition-all flex items-center gap-2 shadow-sm"
-                    >
-                      <Save size={16} />
-                      Lưu Dự thảo
-                    </button>
-                    <button
-                      onClick={() =>
-                        handleActionWithBack("Trình duyệt báo cáo thành công!")
-                      }
-                      className="px-8 py-2.5 bg-[#00529C] text-white rounded-lg text-[14px] font-bold hover:bg-[#00427D] transition-all flex items-center gap-2 shadow-md hover:shadow-lg"
-                    >
-                      <CheckCircle2 size={16} />
-                      Trình duyệt
-                    </button>
-                  </>
-                ) : isApproveMode ? (
-                  <>
-                    <button
-                      onClick={() =>
-                        handleActionWithBack("Đã từ chối đề nghị báo cáo.")
-                      }
-                      className="px-6 py-2.5 bg-white border border-red-500 text-red-500 rounded-lg text-[14px] font-bold hover:bg-red-50 transition-all flex items-center gap-2 shadow-sm"
-                    >
-                      <XCircle size={18} />
-                      Từ chối
-                    </button>
-                    <button
-                      onClick={() =>
-                        handleActionWithBack(
-                          "Phê duyệt đề nghị báo cáo thành công!",
-                        )
-                      }
-                      className="px-8 py-2.5 bg-[#00529C] text-white rounded-lg text-[14px] font-bold hover:bg-[#00427D] transition-all flex items-center gap-2 shadow-md hover:shadow-lg"
-                    >
-                      <CheckCircle2 size={18} />
-                      Phê duyệt
-                    </button>
-                  </>
-                ) : (
+              {localMode !== "view" && (
+                <>
                   <button
                     onClick={() =>
-                      triggerToast(
-                        "Đang khởi tạo tệp tin xuất dữ liệu đề nghị...",
-                      )
+                      handleActionWithBack("Lưu dự thảo thành công!")
+                    }
+                    className="px-5 py-2.5 border border-[#00529C] text-[#00529C] rounded-lg text-[14px] font-bold hover:bg-blue-50 transition-all flex items-center gap-2 shadow-sm"
+                  >
+                    <Save size={16} />
+                    Lưu Dự thảo
+                  </button>
+                  <button
+                    onClick={() =>
+                      handleActionWithBack("Trình duyệt báo cáo thành công!")
                     }
                     className="px-8 py-2.5 bg-[#00529C] text-white rounded-lg text-[14px] font-bold hover:bg-[#00427D] transition-all flex items-center gap-2 shadow-md hover:shadow-lg"
                   >
-                    <Download size={16} />
-                    Export dữ liệu đề nghị
+                    <CheckCircle2 size={16} />
+                    Trình duyệt
                   </button>
-                )}
+                </>
+              )}
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-6">
+            <div className="flex items-center justify-between pb-2 border-b border-gray-100">
+              <div className="flex items-center gap-2">
+                <div className="w-1 h-5 bg-[#00529C] rounded-full" />
+                <span className="text-[15px] font-bold text-[#002D56] uppercase tracking-wide">
+                  Thông tin chung
+                </span>
               </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              {!isView && (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[13px] font-semibold text-[#4A5568]">
+                    Hình thức báo cáo <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative group">
+                    <select
+                      value="pre"
+                      disabled={true}
+                      className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-[13px] focus:outline-none focus:ring-1 focus:ring-[#00529C] focus:border-[#00529C] appearance-none cursor-not-allowed font-medium text-gray-700"
+                    >
+                      <option value="pre">Báo cáo trước</option>
+                      <option value="post">Báo cáo sau</option>
+                    </select>
+                    <ChevronDown
+                      size={16}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[13px] font-semibold text-[#4A5568]">
+                  Kỳ báo cáo (từ ngày) <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="date"
+                    readOnly={isView}
+                    value={reportDates.startDate || "2026-04-29"}
+                    onChange={(e) => setReportDates(prev => ({ ...prev, startDate: e.target.value }))}
+                    className={`w-full px-3 py-1.5 border border-gray-300 rounded text-[12px] focus:outline-none focus:ring-1 focus:ring-[#00529C] focus:border-[#00529C] appearance-none ${isView ? "bg-gray-50 cursor-not-allowed font-medium text-gray-700" : "bg-white"}`}
+                  />
+                  <Calendar
+                    size={14}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[13px] font-semibold text-[#4A5568]">
+                  Kỳ báo cáo (tới ngày) <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="date"
+                    readOnly={isView}
+                    value={reportDates.endDate || "2026-05-29"}
+                    onChange={(e) => setReportDates(prev => ({ ...prev, endDate: e.target.value }))}
+                    className={`w-full px-3 py-1.5 border border-gray-300 rounded text-[12px] focus:outline-none focus:ring-1 focus:ring-[#00529C] focus:border-[#00529C] appearance-none ${isView ? "bg-gray-50 cursor-not-allowed font-medium text-gray-700" : "bg-white"}`}
+                  />
+                  <Calendar
+                    size={14}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[13px] font-semibold text-[#4A5568]">
+                  Hãng <span className="text-red-500">*</span>
+                </label>
+                <span className="text-gray-700 font-medium text-[13px] px-3 py-2 bg-gray-50 border border-gray-100 rounded-md cursor-not-allowed">
+                  XIAOMI
+                </span>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1.5 mt-6">
+              <label className="text-[13px] font-semibold text-[#4A5568]">
+                Diễn giải
+              </label>
+              <textarea
+                readOnly={isView}
+                rows={2}
+                placeholder="Nhập diễn giải báo cáo"
+                value="Đề nghị xuất hàng báo cáo hãng quý 2"
+                className={`w-full px-3 py-2 border border-gray-300 rounded-md text-[13px] focus:outline-none focus:ring-1 focus:ring-[#00529C] focus:border-[#00529C] resize-none ${isView ? "bg-gray-50 cursor-not-allowed font-medium text-gray-700" : "bg-white"}`}
+              />
             </div>
           </div>
         </div>
@@ -1292,6 +1564,15 @@ export default function CreatePreReportDetail({
                     <span className="text-[14px] font-bold text-[#002D56] font-sans uppercase tracking-wide">
                       Đề nghị xuất kho #{idx + 1}
                     </span>
+                    {req.collapsed && (
+                      <div className="flex items-center gap-6 ml-4 text-[11px] text-gray-500 border-l border-gray-200 pl-4">
+                        <div className="flex gap-1.5"><span className="text-[#64748B]">Công ty:</span><span className="font-bold text-[#334155]">{req.company || "---"}</span></div>
+                        <div className="flex gap-1.5"><span className="text-[#64748B]">TTKD:</span><span className="font-bold text-[#334155]">{req.businessCenter || "---"}</span></div>
+                        <div className="flex gap-1.5"><span className="text-[#64748B]">Sale Team:</span><span className="font-bold text-[#334155]">{req.salesTeam || "---"}</span></div>
+                        <div className="flex gap-1.5"><span className="text-[#64748B]">Org xuất:</span><span className="font-bold text-[#334155]">{req.orgExport || "---"}</span></div>
+                        <div className="flex gap-1.5"><span className="text-[#64748B]">Org nhập:</span><span className="font-bold text-[#334155]">{req.orgImport || "---"}</span></div>
+                      </div>
+                    )}
                   </div>
                   <div className="flex items-center gap-2">
                     {!isApproveMode && inventoryRequests.length > 1 && (
@@ -1324,19 +1605,28 @@ export default function CreatePreReportDetail({
                             </span>
                           </div>
 
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                          <div className="space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                              <FilterField label="Ngày hạch toán *" isDate value={req.accountingDate} onChange={(v: string) => updateRequest(req.id, { accountingDate: v })} />
+                            </div>
 
-                            <FilterField label="Công ty *" placeholder="Chọn công ty" value={req.company} onChange={(v: string) => updateRequest(req.id, { company: v })} options={["FDC", "FTG"]} />
-                            <FilterField label="Trung tâm kinh doanh *" placeholder="Chọn TTKD" value={req.businessCenter} onChange={(v: string) => updateRequest(req.id, { businessCenter: v })} options={["FDC HN", "FDC HCM"]} />
-                            <FilterField label="Salesteam *" placeholder="Chọn Sales Team" value={req.salesTeam} onChange={(v: string) => updateRequest(req.id, { salesTeam: v })} options={["Team 1", "Team 2"]} />
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                              <FilterField label="Công ty *" placeholder="Chọn công ty" value={req.company} onChange={(v: string) => updateRequest(req.id, { company: v })} options={["FDCHN", "FDC", "FTG"]} />
+                              <FilterField label="Trung tâm kinh doanh *" placeholder="Chọn TTKD" value={req.businessCenter} onChange={(v: string) => updateRequest(req.id, { businessCenter: v })} options={["FHO Other HN", "FDC HN", "FDC HCM"]} />
+                              <FilterField label="Salesteam *" placeholder="Chọn Sales Team" value={req.salesTeam} onChange={(v: string) => updateRequest(req.id, { salesTeam: v })} options={["FHO Other", "Team 1", "Team 2"]} />
+                            </div>
 
-                            <FilterField label="Org xuất *" placeholder="Chọn org xuất" value={req.orgExport} onChange={(v: string) => updateRequest(req.id, { orgExport: v })} options={["A80", "A77"]} />
-                            <FilterField label="Kho xuất *" placeholder="Chọn kho xuất" value={req.warehouseExport} onChange={(v: string) => updateRequest(req.id, { warehouseExport: v })} options={["Kho 1", "Kho 2"]} />
-                            <FilterField label="Thủ kho xuất *" placeholder="Chọn thủ kho" value={req.storekeeperExport} onChange={(v: string) => updateRequest(req.id, { storekeeperExport: v })} options={["Admin 1", "Admin 2"]} />
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                              <FilterField label="Org xuất *" placeholder="Chọn org xuất" value={req.orgExport} onChange={(v: string) => updateRequest(req.id, { orgExport: v })} options={["A77 - Kho ban HN", "A80", "A77"]} />
+                              <FilterField label="Kho xuất *" placeholder="Chọn kho xuất" value={req.warehouseExport} onChange={(v: string) => updateRequest(req.id, { warehouseExport: v })} options={["Kho hang ban - TSGX - HN", "Kho 1", "Kho 2"]} />
+                              <FilterField label="Thủ kho xuất *" placeholder="Chọn thủ kho" value={req.storekeeperExport} onChange={(v: string) => updateRequest(req.id, { storekeeperExport: v })} options={["haitp - Hai", "Admin 1", "Admin 2"]} />
+                            </div>
 
-                            <FilterField label="Org nhập *" placeholder="Chọn org nhập" value={req.orgImport} onChange={(v: string) => updateRequest(req.id, { orgImport: v })} options={["A80", "A77"]} />
-                            <FilterField label="Kho nhập *" placeholder="Chọn kho nhập" value={req.warehouseImport} onChange={(v: string) => updateRequest(req.id, { warehouseImport: v })} options={["Kho A", "Kho B"]} />
-                            <FilterField label="Thủ kho nhập *" placeholder="Chọn thủ kho" value={req.storekeeperImport} onChange={(v: string) => updateRequest(req.id, { storekeeperImport: v })} options={["Admin A", "Admin B"]} />
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                              <FilterField label="Org nhập *" placeholder="Chọn org nhập" value={req.orgImport} onChange={(v: string) => updateRequest(req.id, { orgImport: v })} options={["A80 - Kho khac HN", "A80", "A77"]} />
+                              <FilterField label="Kho nhập *" placeholder="Chọn kho nhập" value={req.warehouseImport} onChange={(v: string) => updateRequest(req.id, { warehouseImport: v })} options={["Kho hang du an - HN", "Kho A", "Kho B"]} />
+                              <FilterField label="Thủ kho nhập *" placeholder="Chọn thủ kho" value={req.storekeeperImport} onChange={(v: string) => updateRequest(req.id, { storekeeperImport: v })} options={["haitp - Hai", "Admin A", "Admin B"]} />
+                            </div>
                           </div>
 
                           <div className="grid grid-cols-1 gap-6">
@@ -1349,11 +1639,11 @@ export default function CreatePreReportDetail({
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="flex flex-col gap-1.5 text-left">
                               <label className="text-[12px] font-semibold text-[#4A5568]">Diễn giải *</label>
-                              <textarea rows={2} value={req.description} readOnly={mode === "view"} onChange={(e) => updateRequest(req.id, { description: e.target.value })} className={`w-full px-3 py-2 bg-white border border-gray-300 rounded text-[12px] focus:outline-none focus:ring-1 focus:ring-[#00529C] focus:border-[#00529C] resize-none ${mode === "view" ? "bg-gray-50 cursor-not-allowed" : ""}`} placeholder="Nhập diễn giải" />
+                              <textarea rows={2} value={req.description} readOnly={isView} onChange={(e) => updateRequest(req.id, { description: e.target.value })} className={`w-full px-3 py-2 bg-white border border-gray-300 rounded text-[12px] focus:outline-none focus:ring-1 focus:ring-[#00529C] focus:border-[#00529C] resize-none ${isView ? "bg-gray-50 cursor-not-allowed" : ""}`} placeholder="Nhập diễn giải" />
                             </div>
                             <div className="flex flex-col gap-1.5 text-left">
                               <label className="text-[12px] font-semibold text-[#4A5568]">Ghi chú</label>
-                              <textarea rows={2} value={req.note} readOnly={mode === "view"} onChange={(e) => updateRequest(req.id, { note: e.target.value })} className={`w-full px-3 py-2 bg-white border border-gray-300 rounded text-[12px] focus:outline-none focus:ring-1 focus:ring-[#00529C] focus:border-[#00529C] resize-none ${mode === "view" ? "bg-gray-50 cursor-not-allowed" : ""}`} placeholder="Nhập ghi chú" />
+                              <textarea rows={2} value={req.note} readOnly={isView} onChange={(e) => updateRequest(req.id, { note: e.target.value })} className={`w-full px-3 py-2 bg-white border border-gray-300 rounded text-[12px] focus:outline-none focus:ring-1 focus:ring-[#00529C] focus:border-[#00529C] resize-none ${isView ? "bg-gray-50 cursor-not-allowed" : ""}`} placeholder="Nhập ghi chú" />
                             </div>
                           </div>
                         </div>
@@ -1367,13 +1657,13 @@ export default function CreatePreReportDetail({
                                 Sản phẩm xuất
                               </span>
                             </div>
-                            {mode !== "view" && (
+                            {!isView && (
                               <div className="flex items-center gap-3">
                                 <button onClick={() => createReportData(req.id)} className="flex items-center gap-1.5 text-[12px] font-bold text-[#00529C] px-3 py-1.5 border border-[#00529C] rounded hover:bg-blue-50">
                                   <RefreshCcw size={14} />
                                   Tạo dữ liệu báo cáo
                                 </button>
-                                <button onClick={() => setShowImportModal(true)} className="flex items-center gap-1.5 text-[12px] font-bold text-[#00529C] px-3 py-1.5 border border-[#00529C] rounded hover:bg-blue-50">
+                                <button onClick={() => { setImportConfig({ requestId: req.id, section: "products" }); setShowImportModal(true); }} className="flex items-center gap-1.5 text-[12px] font-bold text-[#00529C] px-3 py-1.5 border border-[#00529C] rounded hover:bg-blue-50">
                                   <FilePlus size={14} />
                                   Import
                                 </button>
@@ -1388,49 +1678,49 @@ export default function CreatePreReportDetail({
                                 <tr className="bg-[#F8FAFC]">
                                   <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[50px]">No</th>
                                   <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[120px]">Mã sản phẩm</th>
-                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[120px]">Tên sản phẩm</th>
-                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[100px]">PS</th>
+                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[250px]">Tên sản phẩm</th>
+                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[150px]">PS</th>
                                   <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[100px]">Đơn vị tính</th>
                                   <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[120px]">Số lượng tồn</th>
                                   <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[120px]">Số lượng xuất</th>
-                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[120px]">Đơn giá xuất</th>
-                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[120px]">Thành tiền</th>
                                   <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[120px]">Số SN/IMEI xuất</th>
-                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[120px]">SL đã xuất</th>
                                   <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[120px]">Số SN/IMEI nhập</th>
-                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[120px]">SL đã nhập</th>
                                   <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[120px]">Tác vụ</th>
                                 </tr>
                               </thead>
                               <tbody>
-                                {req.products.length > 0 ? (
-                                  req.products.map((p, pIdx) => (
+                                {req.products.filter(p => !isView || p.exportQty > 0).length > 0 ? (
+                                  req.products.filter(p => !isView || p.exportQty > 0).map((p, pIdx) => (
                                     <tr key={p.id} className="hover:bg-gray-50 border-b border-gray-100 group/row">
                                       <td className="px-4 py-3 text-[12px]">{String(pIdx + 1).padStart(2, '0')}</td>
                                       <td className="px-4 py-3 text-[12px] relative">
-                                        <input type="text" value={p.itemCode} readOnly={mode === "view"} onChange={(e) => {}} className={`w-full bg-transparent border-none focus:ring-0 focus:outline-none p-0 ${mode === "view" ? "cursor-default" : ""}`} placeholder="..." />
+                                        <input type="text" value={p.itemCode} readOnly={isView} onChange={(e) => updateProduct(req.id, p.id, { itemCode: e.target.value })} className={`w-full bg-transparent border-none focus:ring-0 focus:outline-none p-0 ${isView ? "cursor-default" : ""}`} placeholder="..." />
                                         {!isView && <Edit2 size={10} className="absolute right-2 top-4 text-gray-300 opacity-0 group-hover/row:opacity-100" />}
                                       </td>
-                                      <td className="px-4 py-3 text-[12px] relative font-medium">
-                                        <input type="text" value={p.itemName} readOnly={mode === "view"} onChange={(e) => {}} className={`w-full bg-transparent border-none focus:ring-0 focus:outline-none p-0 ${mode === "view" ? "cursor-default" : ""}`} placeholder="..." />
-                                        {!isView && <Edit2 size={10} className="absolute right-2 top-4 text-gray-300 opacity-0 group-hover/row:opacity-100" />}
+                                      <td className="px-4 py-3 text-[12px] relative font-medium leading-relaxed">
+                                        <div className="w-full whitespace-normal break-words">
+                                          <input type="text" value={p.itemName} readOnly={isView} onChange={(e) => updateProduct(req.id, p.id, { itemName: e.target.value })} className={`w-full bg-transparent border-none focus:ring-0 focus:outline-none p-0 ${isView ? "cursor-default" : ""}`} placeholder="..." />
+                                        </div>
+                                        {!isView && <Edit2 size={10} className="absolute right-1 top-4 text-gray-300 opacity-0 group-hover/row:opacity-100" />}
                                       </td>
-                                      <td className="px-4 py-3 text-[12px]">{p.ps || "---"}</td>
-                                      <td className="px-4 py-3 text-[12px]">{p.unit || "---"}</td>
-                                      <td className="px-4 py-3 text-[12px]">{p.inventoryQty}</td>
+                                      <td className="px-4 py-3 text-[12px] whitespace-normal break-words leading-relaxed">
+                                        <input type="text" value={p.ps} readOnly={isView} onChange={(e) => updateProduct(req.id, p.id, { ps: e.target.value })} className={`w-full bg-transparent border-none focus:ring-0 focus:outline-none p-0 ${isView ? "cursor-default" : ""}`} placeholder="..." />
+                                      </td>
+                                      <td className="px-4 py-3 text-[12px]">
+                                        <input type="text" value={p.unit} readOnly={isView} onChange={(e) => updateProduct(req.id, p.id, { unit: e.target.value })} className={`w-full bg-transparent border-none focus:ring-0 focus:outline-none p-0 ${isView ? "cursor-default" : ""}`} placeholder="..." />
+                                      </td>
+                                      <td className="px-4 py-3 text-[12px]">
+                                        <input type="number" value={p.inventoryQty} readOnly={isView} onChange={(e) => updateProduct(req.id, p.id, { inventoryQty: Number(e.target.value) })} className={`w-full bg-transparent border-none focus:ring-0 focus:outline-none p-0 ${isView ? "cursor-default" : ""}`} placeholder="0" />
+                                      </td>
                                       <td className="px-4 py-3 text-[12px] relative font-bold text-[#00529C]">
-                                        <input type="number" value={p.exportQty} readOnly={mode === "view"} onChange={(e) => {}} className={`w-full bg-transparent border-none focus:ring-0 focus:outline-none p-0 ${mode === "view" ? "cursor-default" : ""}`} placeholder="0" />
+                                        <input type="number" value={p.exportQty} readOnly={isView} onChange={(e) => updateProduct(req.id, p.id, { exportQty: Number(e.target.value), totalPrice: Number(e.target.value) * p.exportPrice })} className={`w-full bg-transparent border-none focus:ring-0 focus:outline-none p-0 ${isView ? "cursor-default" : ""}`} placeholder="0" />
                                         {!isView && <Edit2 size={10} className="absolute right-2 top-4 text-gray-300 opacity-0 group-hover/row:opacity-100" />}
                                       </td>
-                                      <td className="px-4 py-3 text-[12px]">{p.exportPrice.toLocaleString()}</td>
-                                      <td className="px-4 py-3 text-[12px] font-bold">{(p.exportQty * p.exportPrice).toLocaleString()}</td>
                                       <td className="px-4 py-3 text-[12px] text-gray-400">{p.serialNumberExport}</td>
-                                      <td className="px-4 py-3 text-[12px]">{p.exportedQty}</td>
                                       <td className="px-4 py-3 text-[12px] text-gray-400">{p.serialNumberImport}</td>
-                                      <td className="px-4 py-3 text-[12px]">{p.importedQty}</td>
                                       <td className="px-4 py-3 text-[12px]">
                                         <div className="flex items-center gap-3">
-                                          {mode !== "view" && (
+                                          {!isView && (
                                             <button onClick={() => removeProduct(req.id, p.id)} className="text-gray-400 hover:text-red-500 transition-colors" title="Xóa dòng">
                                               <Trash2 size={16} />
                                             </button>
@@ -1453,7 +1743,7 @@ export default function CreatePreReportDetail({
                             </table>
                           </div>
 
-                          {mode !== "view" && (
+                          {!isView && (
                             <button 
                               onClick={() => addProduct(req.id)}
                               className="flex items-center gap-1 text-[12px] font-bold text-[#00529C] hover:underline"
@@ -1463,14 +1753,10 @@ export default function CreatePreReportDetail({
                           )}
 
                           <div className="flex flex-col gap-1 items-end mt-4 pt-4 border-t border-gray-100">
-                            <div className="flex items-center gap-2 text-[12px]">
-                              <span className="text-gray-500">Tổng số lượng</span>
-                              <span className="font-bold text-[#002D56]">{req.products.reduce((acc, p) => acc + p.exportQty, 0)}</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-[12px]">
-                              <span className="text-gray-500">Tổng số tiền</span>
-                              <span className="font-bold text-[#002D56]">{req.products.reduce((acc, p) => acc + (p.exportQty * p.exportPrice), 0).toLocaleString()} VND</span>
-                            </div>
+                             <div className="flex items-center gap-2 text-[12px]">
+                               <span className="text-gray-500">Tổng số lượng</span>
+                               <span className="font-bold text-[#002D56]">{req.products.reduce((acc, p) => acc + p.exportQty, 0)}</span>
+                             </div>
                           </div>
                         </div>
 
@@ -1484,12 +1770,14 @@ export default function CreatePreReportDetail({
                               </span>
                             </div>
                             <div className="flex items-center gap-3">
-                              <button onClick={() => triggerToast("Export Dữ liệu báo cáo...")} className="flex items-center gap-1.5 text-[12px] font-bold text-[#00529C] px-3 py-1.5 border border-[#00529C] rounded hover:bg-blue-50">
-                                <Download size={14} />
-                                Export
-                              </button>
-                              {mode !== "view" && (
-                                <button onClick={() => triggerToast("Import Dữ liệu báo cáo...")} className="flex items-center gap-1.5 text-[12px] font-bold text-[#00529C] px-3 py-1.5 border border-[#00529C] rounded hover:bg-blue-50">
+                              {!isView && (
+                                <button onClick={() => triggerToast("Export Dữ liệu báo cáo...")} className="flex items-center gap-1.5 text-[12px] font-bold text-[#00529C] px-3 py-1.5 border border-[#00529C] rounded hover:bg-blue-50">
+                                  <Download size={14} />
+                                  Export
+                                </button>
+                              )}
+                              {!isView && (
+                                <button onClick={() => { setImportConfig({ requestId: req.id, section: "report" }); setShowImportModal(true); }} className="flex items-center gap-1.5 text-[12px] font-bold text-[#00529C] px-3 py-1.5 border border-[#00529C] rounded hover:bg-blue-50">
                                   <FilePlus size={14} />
                                   Import
                                 </button>
@@ -1502,18 +1790,26 @@ export default function CreatePreReportDetail({
                               <thead>
                                 <tr className="bg-[#F8FAFC]">
                                   <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[50px]">No</th>
-                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[120px]">Ngày hóa đơn</th>
-                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[150px]">Số Hóa đơn tham chiếu</th>
-                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[120px]">Mã Khách hàng</th>
-                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[150px]">Tên Khách hàng</th>
                                   <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[120px]">Mã sản phẩm</th>
-                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[150px]">Tên sản phẩm</th>
-                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[100px]">PS</th>
+                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[250px]">Tên sản phẩm</th>
+                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[150px]">PS</th>
                                   <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[100px]">Đơn vị tính</th>
                                   <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[100px]">Số lượng</th>
-                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[120px]">Đơn giá</th>
-                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[120px]">Thành tiền</th>
-                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[150px]">Số SN/IMEI</th>
+                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[120px] bg-orange-50 font-black">Ngày hóa đơn</th>
+                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[150px] bg-orange-50 font-black">Số Hóa đơn tham chiếu</th>
+                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[120px] bg-orange-50 font-black">Mã Khách hàng</th>
+                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[150px] bg-orange-50 font-black">Tên Khách hàng</th>
+                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[150px] bg-orange-50 font-black">Bill To Location</th>
+                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[200px] bg-orange-50 font-black">Bill To Address</th>
+                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[100px] bg-orange-50 font-black">ZIP Code (Bill)</th>
+                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[120px] bg-orange-50 font-black">Tỉnh thành (Bill)</th>
+                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[100px] bg-orange-50 font-black">Quốc gia (Bill)</th>
+                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[150px] bg-orange-50 font-black">Ship To Location</th>
+                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[200px] bg-orange-50 font-black">Ship To Address</th>
+                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[100px] bg-orange-50 font-black">ZIP Code (Ship)</th>
+                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[120px] bg-orange-50 font-black">Tỉnh thành (Ship)</th>
+                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[100px] bg-orange-50 font-black">Quốc gia (Ship)</th>
+                                  <th className="px-4 py-3 text-[11px] font-bold text-[#002B49] uppercase border-b border-gray-200 w-[150px] bg-orange-50 font-black">Số SN/IMEI</th>
                                 </tr>
                               </thead>
                               <tbody>
@@ -1521,48 +1817,63 @@ export default function CreatePreReportDetail({
                                   req.reportData.map((rd, rdIdx) => (
                                     <tr key={rd.id} className="hover:bg-gray-50 border-b border-gray-100 group/row">
                                       <td className="px-4 py-3 text-[12px] font-medium">{String(rdIdx + 1).padStart(2, '0')}</td>
-                                      <td className={`px-4 py-3 text-[12px] ${!rd.invoiceDate ? "bg-orange-50" : ""}`}>
-                                        <input type="text" value={rd.invoiceDate} readOnly={mode === "view"} onChange={(e) => updateReportData(req.id, rd.id, { invoiceDate: e.target.value })} className={`w-full bg-transparent border-none focus:ring-0 focus:outline-none p-0 text-[#00529C] ${mode === "view" ? "cursor-default" : ""}`} placeholder="DD/MM/YYYY" />
-                                      </td>
-                                      <td className={`px-4 py-3 text-[12px] ${!rd.refInvoiceNumber ? "bg-orange-50" : ""}`}>
-                                        <input type="text" value={rd.refInvoiceNumber} readOnly={mode === "view"} onChange={(e) => updateReportData(req.id, rd.id, { refInvoiceNumber: e.target.value })} className={`w-full bg-transparent border-none focus:ring-0 focus:outline-none p-0 text-[#00529C] ${mode === "view" ? "cursor-default" : ""}`} placeholder="Nhập số HĐ" />
-                                      </td>
-                                      <td className={`px-4 py-3 text-[12px] ${!rd.customerId ? "bg-orange-50" : ""}`}>
-                                        <input type="text" value={rd.customerId} readOnly={mode === "view"} onChange={(e) => updateReportData(req.id, rd.id, { customerId: e.target.value })} className={`w-full bg-transparent border-none focus:ring-0 focus:outline-none p-0 ${mode === "view" ? "cursor-default" : ""}`} placeholder="Mã KH" />
-                                      </td>
-                                      <td className={`px-4 py-3 text-[12px] ${!rd.customerName ? "bg-orange-50" : ""}`}>
-                                        <input type="text" value={rd.customerName} readOnly={mode === "view"} onChange={(e) => updateReportData(req.id, rd.id, { customerName: e.target.value })} className={`w-full bg-transparent border-none focus:ring-0 focus:outline-none p-0 ${mode === "view" ? "cursor-default" : ""}`} placeholder="Tên KH" />
-                                      </td>
                                       <td className="px-4 py-3 text-[12px]">{rd.itemCode}</td>
-                                      <td className="px-4 py-3 text-[12px]">{rd.itemName}</td>
-                                      <td className="px-4 py-3 text-[12px]">{rd.ps}</td>
+                                      <td className="px-4 py-3 text-[12px] whitespace-normal break-words leading-relaxed">{rd.itemName}</td>
+                                      <td className="px-4 py-3 text-[12px] whitespace-normal break-words leading-relaxed">{rd.ps}</td>
                                       <td className="px-4 py-3 text-[12px]">{rd.unit}</td>
                                       <td className="px-4 py-3 text-[12px]">
-                                        <input type="number" value={rd.qty} readOnly={mode === "view"} onChange={(e) => updateReportData(req.id, rd.id, { qty: Number(e.target.value), totalPrice: Number(e.target.value) * rd.unitPrice })} className={`w-full bg-transparent border-none focus:ring-0 focus:outline-none p-0 text-[#00529C] ${mode === "view" ? "cursor-default" : ""}`} />
+                                        <input type="number" value={rd.qty || ""} readOnly={isView} onChange={(e) => updateReportData(req.id, rd.id, { qty: Number(e.target.value), totalPrice: Number(e.target.value) * rd.unitPrice })} className={`w-full bg-transparent border-none focus:ring-0 focus:outline-none p-0 text-[#00529C] ${isView ? "cursor-default" : ""}`} placeholder="0" />
                                       </td>
-                                      <td className="px-4 py-3 text-[12px]">{rd.unitPrice.toLocaleString()}</td>
-                                      <td className="px-4 py-3 text-[12px] font-bold">{rd.totalPrice.toLocaleString()}</td>
-                                      <td className={`px-4 py-3 text-[12px] ${!rd.serialNumber ? "bg-orange-50" : ""}`}>
-                                        <button 
-                                          onClick={() => {
-                                            setCurrentSerialDetailRow({
-                                               id: rd.id,
-                                               itemCode: rd.itemCode,
-                                               itemName: rd.itemName,
-                                               reportQty: String(rd.qty)
-                                            } as any);
-                                            setShowSerialDetailModal(true);
-                                          }}
-                                          className="text-[#00529C] hover:underline font-medium"
-                                        >
-                                          Xem dữ liệu
-                                        </button>
+                                      <td className={`px-4 py-3 text-[12px] bg-orange-50/50`}>
+                                        <input type="text" value={rd.invoiceDate || ""} readOnly={isView} onChange={(e) => updateReportData(req.id, rd.id, { invoiceDate: e.target.value })} className={`w-full bg-transparent border-none focus:ring-0 focus:outline-none p-0 text-[#00529C] ${isView ? "cursor-default" : ""}`} placeholder="DD/MM/YYYY" />
+                                      </td>
+                                      <td className={`px-4 py-3 text-[12px] bg-orange-50/50`}>
+                                        <input type="text" value={rd.refInvoiceNumber || ""} readOnly={isView} onChange={(e) => updateReportData(req.id, rd.id, { refInvoiceNumber: e.target.value })} className={`w-full bg-transparent border-none focus:ring-0 focus:outline-none p-0 text-[#00529C] ${isView ? "cursor-default" : ""}`} placeholder="Nhập số HĐ" />
+                                      </td>
+                                      <td className={`px-4 py-3 text-[12px] bg-orange-50/50`}>
+                                        <input type="text" value={rd.customerId || ""} readOnly={isView} onChange={(e) => updateReportData(req.id, rd.id, { customerId: e.target.value })} className={`w-full bg-transparent border-none focus:ring-0 focus:outline-none p-0 ${isView ? "cursor-default" : ""}`} placeholder="Nhập mã KH" />
+                                      </td>
+                                      <td className={`px-4 py-3 text-[12px] bg-orange-50/50`}>
+                                        <input type="text" value={rd.customerName || ""} readOnly={isView} onChange={(e) => updateReportData(req.id, rd.id, { customerName: e.target.value })} className={`w-full bg-transparent border-none focus:ring-0 focus:outline-none p-0 ${isView ? "cursor-default" : ""}`} placeholder="Nhập tên KH" />
+                                      </td>
+                                      <td className={`px-4 py-3 text-[12px] bg-orange-50/50`}>
+                                        <input type="text" value={rd.billToLocation || ""} readOnly={isView} onChange={(e) => updateReportData(req.id, rd.id, { billToLocation: e.target.value })} className={`w-full bg-transparent border-none focus:ring-0 focus:outline-none p-0 ${isView ? "cursor-default" : ""}`} placeholder="Nhập LOC" />
+                                      </td>
+                                      <td className={`px-4 py-3 text-[12px] bg-orange-50/50`}>
+                                        <input type="text" value={rd.billToAddress || ""} readOnly={isView} onChange={(e) => updateReportData(req.id, rd.id, { billToAddress: e.target.value })} className={`w-full bg-transparent border-none focus:ring-0 focus:outline-none p-0 ${isView ? "cursor-default" : ""}`} placeholder="Nhập Address" />
+                                      </td>
+                                      <td className={`px-4 py-3 text-[12px] bg-orange-50/50`}>
+                                        <input type="text" value={rd.zipCode || ""} readOnly={isView} onChange={(e) => updateReportData(req.id, rd.id, { zipCode: e.target.value })} className={`w-full bg-transparent border-none focus:ring-0 focus:outline-none p-0 ${isView ? "cursor-default" : ""}`} placeholder="ZIP" />
+                                      </td>
+                                      <td className={`px-4 py-3 text-[12px] bg-orange-50/50`}>
+                                        <input type="text" value={rd.city || ""} readOnly={isView} onChange={(e) => updateReportData(req.id, rd.id, { city: e.target.value })} className={`w-full bg-transparent border-none focus:ring-0 focus:outline-none p-0 ${isView ? "cursor-default" : ""}`} placeholder="Tỉnh thành" />
+                                      </td>
+                                      <td className={`px-4 py-3 text-[12px] bg-orange-50/50`}>
+                                        <input type="text" value={rd.country || ""} readOnly={isView} onChange={(e) => updateReportData(req.id, rd.id, { country: e.target.value })} className={`w-full bg-transparent border-none focus:ring-0 focus:outline-none p-0 ${isView ? "cursor-default" : ""}`} placeholder="Quốc gia" />
+                                      </td>
+                                      <td className={`px-4 py-3 text-[12px] bg-orange-50/50`}>
+                                        <input type="text" value={rd.shipToLocation || ""} readOnly={isView} onChange={(e) => updateReportData(req.id, rd.id, { shipToLocation: e.target.value })} className={`w-full bg-transparent border-none focus:ring-0 focus:outline-none p-0 ${isView ? "cursor-default" : ""}`} placeholder="Nhập Ship LOC" />
+                                      </td>
+                                      <td className={`px-4 py-3 text-[12px] bg-orange-50/50`}>
+                                        <input type="text" value={rd.shipToAddress || ""} readOnly={isView} onChange={(e) => updateReportData(req.id, rd.id, { shipToAddress: e.target.value })} className={`w-full bg-transparent border-none focus:ring-0 focus:outline-none p-0 ${isView ? "cursor-default" : ""}`} placeholder="Nhập Ship Address" />
+                                      </td>
+                                      <td className={`px-4 py-3 text-[12px] bg-orange-50/50`}>
+                                        <input type="text" value={rd.shipToZipCode || ""} readOnly={isView} onChange={(e) => updateReportData(req.id, rd.id, { shipToZipCode: e.target.value })} className={`w-full bg-transparent border-none focus:ring-0 focus:outline-none p-0 ${isView ? "cursor-default" : ""}`} placeholder="ZIP" />
+                                      </td>
+                                      <td className={`px-4 py-3 text-[12px] bg-orange-50/50`}>
+                                        <input type="text" value={rd.shipToCity || ""} readOnly={isView} onChange={(e) => updateReportData(req.id, rd.id, { shipToCity: e.target.value })} className={`w-full bg-transparent border-none focus:ring-0 focus:outline-none p-0 ${isView ? "cursor-default" : ""}`} placeholder="Tỉnh thành" />
+                                      </td>
+                                      <td className={`px-4 py-3 text-[12px] bg-orange-50/50`}>
+                                        <input type="text" value={rd.shipToCountry || ""} readOnly={isView} onChange={(e) => updateReportData(req.id, rd.id, { shipToCountry: e.target.value })} className={`w-full bg-transparent border-none focus:ring-0 focus:outline-none p-0 ${isView ? "cursor-default" : ""}`} placeholder="Quốc gia" />
+                                      </td>
+                                      <td className={`px-4 py-3 text-[12px] bg-orange-50/50`}>
+                                        <input type="text" value={rd.serialNumber || ""} readOnly={isView} onChange={(e) => updateReportData(req.id, rd.id, { serialNumber: e.target.value })} className={`w-full bg-transparent border-none focus:ring-0 focus:outline-none p-0 ${isView ? "cursor-default" : ""}`} placeholder="Nhập Serial" />
                                       </td>
                                     </tr>
                                   ))
                                 ) : (
                                   <tr>
-                                    <td colSpan={13} className="px-4 py-12 text-center text-gray-400 text-[12px]">
+                                    <td colSpan={21} className="px-4 py-12 text-center text-gray-400 text-[12px]">
                                       <div className="flex flex-col items-center gap-2">
                                         <FileText size={24} className="opacity-20" />
                                         <span>Dữ liệu báo cáo chưa được khởi tạo. Nhấn "Tạo dữ liệu báo cáo" để bắt đầu.</span>
@@ -1573,6 +1884,13 @@ export default function CreatePreReportDetail({
                               </tbody>
                             </table>
                           </div>
+
+                          <div className="flex flex-col gap-1 items-end mt-4 pt-4 border-t border-gray-100">
+                             <div className="flex items-center gap-2 text-[12px]">
+                               <span className="text-gray-500">Tổng số lượng</span>
+                               <span className="font-bold text-[#002D56]">{req.reportData.reduce((acc, rd) => acc + (rd.qty || 0), 0)}</span>
+                             </div>
+                          </div>
                         </div>
                       </div>
                     </motion.div>
@@ -1582,7 +1900,7 @@ export default function CreatePreReportDetail({
             ))}
           </AnimatePresence>
 
-          {mode === "create" && (
+          {localMode === "create" && (
             <button
               onClick={addRequest}
               className="w-full py-4 border-2 border-dashed border-[#00529C]/30 rounded-lg flex items-center justify-center gap-2 text-[#00529C] font-bold text-[14px] hover:bg-blue-50 transition-all hover:border-[#00529C]/50 bg-white shadow-sm"
@@ -1594,7 +1912,7 @@ export default function CreatePreReportDetail({
         </div>
 
           {/* Feedback Sections - Display in view mode */}
-          {mode === "view" && (
+          {localMode === "view" && (
             <div className="space-y-6">
               {/* BD Feedback */}
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
@@ -1696,65 +2014,6 @@ export default function CreatePreReportDetail({
                           </td>
                         </tr>
                       ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              {/* Lệnh xuất báo cáo hãng section */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mt-8">
-                <div className="px-6 py-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
-                  <h3 className="text-[16px] font-bold text-[#002D56] flex items-center gap-2">
-                    <History size={18} className="text-[#00529C]" />
-                    Lệnh xuất báo cáo hãng
-                  </h3>
-                  <span className="text-[12px] text-gray-500 italic">
-                    (Lệnh xuất báo cáo hãng được tạo ra từ đề nghị này)
-                  </span>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="bg-[#F8FAFC] border-b border-gray-100">
-                        <th className="px-6 py-3 text-[12px] font-semibold text-[#002B49] w-12 text-center">STT</th>
-                        <th className="px-6 py-3 text-[12px] font-semibold text-[#002B49]">Mã báo cáo</th>
-                        <th className="px-6 py-3 text-[12px] font-semibold text-[#002B49]">Loại báo cáo</th>
-                        <th className="px-6 py-3 text-[12px] font-semibold text-[#002B49]">Thời gian</th>
-                        <th className="px-6 py-3 text-[12px] font-semibold text-[#002B49]">Người xuất</th>
-                        <th className="px-6 py-3 text-[12px] font-semibold text-[#002B49]">Ngày xuất</th>
-                        <th className="px-6 py-3 text-[12px] font-semibold text-[#002B49] text-center">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {brandReports.length > 0 ? (
-                        brandReports.map((report, idx) => (
-                          <tr key={report.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                            <td className="px-6 py-3 text-[13px] text-gray-500 text-center">
-                              {(idx + 1).toString().padStart(2, "0")}
-                            </td>
-                            <td className="px-6 py-3 text-[13px] font-mono text-gray-600 font-medium">{report.reportCode}</td>
-                            <td className="px-6 py-3 text-[13px] text-gray-700">{report.reportType}</td>
-                            <td className="px-6 py-3 text-[13px] text-gray-600">{report.period}</td>
-                            <td className="px-6 py-3 text-[13px] text-gray-700 font-medium">{report.exporter}</td>
-                            <td className="px-6 py-3 text-[13px] text-gray-500">{report.exportDate}</td>
-                            <td className="px-6 py-3 text-center">
-                              <button 
-                                onClick={() => triggerToast("Đang tải báo cáo...")}
-                                className="p-1.5 text-[#00529C] hover:bg-blue-50 rounded transition-colors"
-                                title="Tải về"
-                              >
-                                <Download size={16} />
-                              </button>
-                            </td>
-                          </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td colSpan={7} className="px-6 py-8 text-center text-gray-400 text-[13px] italic">
-                            Chưa có lệnh xuất báo cáo hãng nào được tạo.
-                          </td>
-                        </tr>
-                      )}
                     </tbody>
                   </table>
                 </div>
@@ -2146,6 +2405,83 @@ export default function CreatePreReportDetail({
                     className="px-6 py-2 border border-[#00529C] text-[#00529C] font-bold rounded-md hover:bg-[#F0F7FF] transition-colors text-[14px]"
                   >
                     Đóng
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+        {/* Action Confirmation Modals */}
+        <AnimatePresence>
+          {(showApproveConfirm || showRejectConfirm) && (
+            <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
+              >
+                <div className="p-6 text-center space-y-4">
+                  <div className={`w-16 h-16 rounded-full mx-auto flex items-center justify-center ${showRejectConfirm ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-[#00529C]'}`}>
+                    {showRejectConfirm ? <XCircle size={32} /> : <CheckCircle2 size={32} />}
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <h3 className="text-xl font-bold text-[#002D56]">
+                      {showRejectConfirm ? 'Xác nhận từ chối' : 'Xác nhận phê duyệt'}
+                    </h3>
+                    <p className="text-gray-500 text-sm">
+                      {showRejectConfirm 
+                        ? 'Bạn có chắc chắn muốn từ chối đề nghị báo cáo này không?' 
+                        : 'Bạn có chắc chắn muốn phê duyệt đề nghị báo cáo này không?'}
+                    </p>
+                  </div>
+
+                  {showRejectConfirm && (
+                    <div className="mt-4 text-left space-y-2">
+                      <label className="text-[13px] font-semibold text-gray-700">
+                        Lý do từ chối <span className="text-red-500">*</span>
+                      </label>
+                      <textarea
+                        value={reason}
+                        onChange={(e) => setReason(e.target.value)}
+                        placeholder="Nhập lý do từ chối..."
+                        rows={3}
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div className="p-6 bg-gray-50 flex gap-3">
+                  <button
+                    onClick={() => {
+                      setShowApproveConfirm(false);
+                      setShowRejectConfirm(false);
+                      setReason("");
+                    }}
+                    className="flex-1 py-3 px-4 bg-white border border-gray-200 text-gray-700 rounded-xl font-bold text-sm hover:bg-gray-100 transition-colors"
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (showRejectConfirm) {
+                        if (!reason.trim()) {
+                          triggerToast("Vui lòng nhập lý do từ chối!");
+                          return;
+                        }
+                        handleActionWithBack("Đã từ chối đề nghị báo cáo.");
+                      } else {
+                        handleActionWithBack("Phê duyệt đề nghị báo cáo thành công!");
+                      }
+                      setShowApproveConfirm(false);
+                      setShowRejectConfirm(false);
+                      setReason("");
+                    }}
+                    className={`flex-1 py-3 px-4 text-white rounded-xl font-bold text-sm transition-opacity ${showRejectConfirm ? 'bg-red-500 hover:bg-red-600' : 'bg-[#00529C] hover:bg-[#00427D]'}`}
+                  >
+                    Xác nhận
                   </button>
                 </div>
               </motion.div>

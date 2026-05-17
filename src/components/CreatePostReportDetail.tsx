@@ -111,22 +111,32 @@ interface TableRow {
 }
 
 const NEW_COLUMNS: { key: keyof TableRow; label: string }[] = [
-  { key: "reportInvoiceDate", label: "Ngày hóa đơn" },
-  { key: "reportInvoiceNumber", label: "Mã hóa đơn" },
-  { key: "reportCustomerId", label: "Mã khách hàng" },
-  { key: "reportCustomerName", label: "Tên khách hàng" },
   { key: "itemCode", label: "Mã sản phẩm" },
   { key: "itemName", label: "Tên sản phẩm" },
   { key: "ps", label: "PS" },
   { key: "uom", label: "Đơn vị tính" },
   { key: "reportQty", label: "Số lượng" },
+  { key: "reportInvoiceDate", label: "Ngày hóa đơn" },
+  { key: "reportInvoiceNumber", label: "Mã hóa đơn" },
+  { key: "reportCustomerId", label: "Mã khách hàng" },
+  { key: "reportCustomerName", label: "Tên khách hàng" },
+  { key: "billToLocation", label: "Bill To Location" },
+  { key: "billToAddress", label: "Bill To Address" },
+  { key: "zipCode", label: "ZIP Code (Bill)" },
+  { key: "city", label: "Tỉnh thành (Bill)" },
+  { key: "country", label: "Quốc gia (Bill)" },
+  { key: "shipToLocation", label: "Ship To Location" },
+  { key: "shipToAddress", label: "Ship To Address" },
+  { key: "shipToZipCode", label: "ZIP Code (Ship)" },
+  { key: "shipToCity", label: "Tỉnh thành (Ship)" },
+  { key: "shipToCountry", label: "Quốc gia (Ship)" },
   { key: "transactionType", label: "Transaction Type" },
   { key: "serialNumber", label: "Số SN/IMEI" },
 ];
 
 const mockCommonFields = {
-  brandVendor: "Apple",
-  comName: "FDCHN",
+  brandVendor: "XIAOMI",
+  comName: "FDC HN",
   geo: "HN",
   reportCustomerId: "219748",
   reportCustomerName: "CÔNG TY TNHH CÔNG NGHỆ HÀ DUY",
@@ -137,27 +147,27 @@ const mockCommonFields = {
   invtOrgName: "Kho khác HN",
   invtSubCode: "111000000",
   invtSubName: "Kho hang nhap khau HCM",
-  brand: "APPLE",
-  ps: "SMART PHONE",
-  itemCode: "71084507",
-  partNumber: "MG6L4ZP/A",
-  itemName: "Điện thoại iPhone 17 256GB Xanh Lam Khói MG6L4ZP/A",
-  model: "iPhone 17",
+  brand: "XIAOMI",
+  ps: "SPXMI - SMART PHONE XIAOMI",
+  itemCode: "70281468",
+  partNumber: "MZB0ARHEU",
+  itemName: "Điện thoại di động Redmi Note 11 Pro Polar White 8GB RAM 128GB ROM (2201116TG)_MZB0ARHEU",
+  model: "Redmi Note 11 Pro",
   uom: "Cái",
-  color: "Blue Titanium",
-  cpuBrand: "APPLE",
-  cpuModel: "A17 Pro",
-  osType: "iOS",
+  color: "Polar White",
+  cpuBrand: "MediaTek",
+  cpuModel: "Helio G96",
+  osType: "Android",
   reportInvoiceDate: "25/03/2026",
   reportInvoiceNumber: "167285",
   reportQty: "10",
-  poNumber: "PO-ADG-2026-001",
-  poUnitCost: "28,000,000",
+  poNumber: "PO-XIAOMI-2026-001",
+  poUnitCost: "6,000,000",
   currencyCode: "VND",
-  unitCost: "29,000,000",
-  totalCost: "290,000,000",
-  unitPrice: "34,990,000",
-  revenue: "349,900,000",
+  unitCost: "6,200,000",
+  totalCost: "62,000,000",
+  unitPrice: "7,490,000",
+  revenue: "74,900,000",
   billToLocationId: "LOC-HCM-01",
   billToLocation: "HCM Dist 1",
   billToAddress: "123 Le Loi, HCM",
@@ -170,7 +180,7 @@ const mockCommonFields = {
   shipToZipCode: "700000",
   shipToCity: "HCM",
   shipToCountry: "VN",
-  bidNumber: "BID-APPLE-2026",
+  bidNumber: "BID-XIAOMI-2026",
   endUserName: "Nguyen Van A",
   endUserAddress: "456 Tran Hung Dao, HCM",
   endUserCity: "HCM",
@@ -232,10 +242,18 @@ const importChangesMock: TableRow[] = [
 export default function CreatePostReportDetail({
   category,
   onBack,
+  onTypeChange,
+  onCategoryChange,
 }: {
   category: "quantity" | "serial";
   onBack: () => void;
+  onTypeChange?: (type: "pre" | "post") => void;
+  onCategoryChange?: (cat: "quantity" | "serial") => void;
 }) {
+  const [reportDates, setReportDates] = useState({
+    startDate: "",
+    endDate: "",
+  });
   const type = "post" as string;
   const mode = "create" as string;
   const isApproveMode = false;
@@ -249,6 +267,20 @@ export default function CreatePostReportDetail({
   >("idle");
   const [hasImportedData, setHasImportedData] = useState(mode === "view");
   const [didFreshImport, setDidFreshImport] = useState(false);
+
+  // Stateful data for editing
+  const [rows, setRows] = useState<TableRow[]>(() => {
+    if (mode === "create") {
+      return tableData.map(r => {
+        const newRow = { ...r };
+        NEW_COLUMNS.slice(5).forEach(col => {
+          (newRow as any)[col.key] = "";
+        });
+        return newRow;
+      });
+    }
+    return tableData;
+  });
 
   // Advanced Filter State
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -390,7 +422,8 @@ export default function CreatePostReportDetail({
     () => {
       const initial: Record<string, number> = { no: 60 };
       NEW_COLUMNS.forEach((col) => {
-        const estimated = Math.max(120, col.label.length * 9 + 40);
+        let baseWidth = col.key === "itemName" ? 250 : 120;
+        const estimated = Math.max(baseWidth, col.label.length * 9 + 40);
         initial[col.key] = estimated;
       });
       return initial;
@@ -540,7 +573,7 @@ export default function CreatePostReportDetail({
   const currentTableData = useMemo(() => {
     let baseData: TableRow[] = [];
     if (activeTab === "ledger") {
-      baseData = tableData;
+      baseData = rows;
     } else if (activeTab === "import") {
       baseData = hasImportedData
         ? showHighlight
@@ -548,12 +581,12 @@ export default function CreatePostReportDetail({
           : importChangesMock.filter((i) => i.changeType !== "delete")
         : [];
     } else {
-      baseData = hasImportedData ? getMergedData() : tableData;
+      baseData = hasImportedData ? getMergedData() : rows;
     }
     return applyFiltering(baseData);
   }, [
     activeTab,
-    tableData,
+    rows,
     importChangesMock,
     hasImportedData,
     showHighlight,
@@ -561,9 +594,26 @@ export default function CreatePostReportDetail({
     tableFilters,
   ]);
 
+  const updateRow = (id: string, field: keyof TableRow, value: string) => {
+    setRows(prev => prev.map(r => r.id === id ? { ...r, [field]: value } : r));
+  };
+
   const renderCell = (row: TableRow, field: keyof TableRow) => {
     if (field === "reportQty" && category === "serial") {
       return "1";
+    }
+
+    const colIdx = COLUMN_CONFIG.findIndex(c => c.key === field);
+    if (mode === "create" && colIdx > 4) {
+      return (
+        <input
+          type="text"
+          value={String(row[field] || "")}
+          placeholder={`Nhập ${COLUMN_CONFIG[colIdx].label}`}
+          onChange={(e) => updateRow(row.id, field, e.target.value)}
+          className="w-full bg-transparent border-none focus:ring-0 focus:outline-none p-0 text-[#00529C] placeholder-gray-300 italic"
+        />
+      );
     }
 
     const isChanged =
@@ -676,13 +726,159 @@ export default function CreatePostReportDetail({
             ))}
           </div>
 
-          <div className="flex justify-between items-start pt-2">
-            <div className="space-y-6">
-              <h1 className="text-[28px] font-bold text-[#002D56] font-sans tracking-tight leading-tight">
-                {mode === "create" ? "Tạo mới" : "Chi tiết"} đề nghị báo cáo{" "}
-                {type === "pre" ? "(trước)" : "(sau)"}
-              </h1>
+          <div className="flex justify-between items-center pt-2">
+            <h1 className="text-[24px] font-bold text-[#002D56] font-sans tracking-tight leading-tight">
+              {mode === "create" ? "Tạo mới" : "Chi tiết"} đề nghị báo cáo{" "}
+              {type === "pre" ? "(Báo cáo trước)" : "(Báo cáo sau)"}
+            </h1>
 
+            <div className="flex items-center gap-3">
+              {mode === "create" && (
+                <>
+                  <button
+                    onClick={() => setShowImportModal(true)}
+                    className="px-4 py-2.5 border border-[#00529C] text-[#00529C] rounded-lg text-[13px] font-bold hover:bg-blue-50 transition-all flex items-center gap-2 shadow-sm"
+                  >
+                    <RefreshCcw size={16} />
+                    Import
+                  </button>
+                  <button
+                    onClick={() =>
+                      handleActionWithBack("Lưu dự thảo thành công!")
+                    }
+                    className="px-4 py-2.5 border border-[#00529C] text-[#00529C] rounded-lg text-[13px] font-bold hover:bg-blue-50 transition-all flex items-center gap-2 shadow-sm"
+                  >
+                    <Save size={16} />
+                    Lưu Dự thảo
+                  </button>
+                  <button
+                    onClick={() =>
+                      handleActionWithBack("Trình duyệt báo cáo thành công!")
+                    }
+                    className="px-6 py-2.5 bg-[#00529C] text-white rounded-lg text-[13px] font-bold hover:bg-[#00427D] transition-all flex items-center gap-2 shadow-md hover:shadow-lg"
+                  >
+                    <CheckCircle2 size={16} />
+                    Trình duyệt
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+
+          {mode === "create" ? (
+            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-6">
+              <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
+                <div className="w-1 h-5 bg-[#00529C] rounded-full" />
+                <span className="text-[15px] font-bold text-[#002D56] uppercase tracking-wide">
+                  Thông tin chung
+                </span>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[13px] font-semibold text-[#4A5568]">
+                    Hình thức báo cáo <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative group">
+                    <select
+                      value="post"
+                      onChange={(e) => {
+                        if (onTypeChange) {
+                          onTypeChange(e.target.value as "pre" | "post");
+                        }
+                      }}
+                      className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-[13px] focus:outline-none focus:ring-1 focus:ring-[#00529C] focus:border-[#00529C] appearance-none"
+                    >
+                      <option value="pre">Báo cáo trước</option>
+                      <option value="post">Báo cáo sau</option>
+                    </select>
+                    <ChevronDown
+                      size={16}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none group-focus-within:text-[#00529C]"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[13px] font-semibold text-[#4A5568]">
+                    Kỳ báo cáo (từ ngày) <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="date"
+                      value={reportDates.startDate}
+                      onChange={(e) =>
+                        setReportDates((prev) => ({
+                          ...prev,
+                          startDate: e.target.value,
+                        }))
+                      }
+                      className="w-full px-3 py-1.5 bg-white border border-gray-300 rounded text-[12px] focus:outline-none focus:ring-1 focus:ring-[#00529C] focus:border-[#00529C] appearance-none"
+                    />
+                    <Calendar
+                      size={14}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[13px] font-semibold text-[#4A5568]">
+                    Kỳ báo cáo (tới ngày) <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="date"
+                      value={reportDates.endDate}
+                      onChange={(e) =>
+                        setReportDates((prev) => ({
+                          ...prev,
+                          endDate: e.target.value,
+                        }))
+                      }
+                      className="w-full px-3 py-1.5 bg-white border border-gray-300 rounded text-[12px] focus:outline-none focus:ring-1 focus:ring-[#00529C] focus:border-[#00529C] appearance-none"
+                    />
+                    <Calendar
+                      size={14}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[13px] font-semibold text-[#4A5568]">
+                    Hãng <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative group">
+                    <select className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-[13px] focus:outline-none focus:ring-1 focus:ring-[#00529C] focus:border-[#00529C] appearance-none">
+                      <option value="">Chọn hãng</option>
+                      {BRANDS.map((brand) => (
+                        <option key={brand.id} value={brand.id}>
+                          {brand.name}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown
+                      size={16}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none group-focus-within:text-[#00529C]"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[13px] font-semibold text-[#4A5568]">
+                  Diễn giải
+                </label>
+                <textarea 
+                  rows={2}
+                  placeholder="Nhập diễn giải báo cáo"
+                  className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-[13px] focus:outline-none focus:ring-1 focus:ring-[#00529C] focus:border-[#00529C] resize-none"
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="flex justify-between items-end">
               <div className="space-y-3">
                 <div className="flex items-center gap-3 text-[15px]">
                   <span className="text-[#64748B]">
@@ -698,13 +894,13 @@ export default function CreatePostReportDetail({
                 <div className="flex items-center gap-12 text-[15px]">
                   <div className="flex items-center gap-2">
                     <span className="text-[#64748B]">Người tạo đơn</span>
-                    <span className="font-bold text-[#334155]">
-                      admin
-                    </span>
+                    <span className="font-bold text-[#334155]">admin</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-[#64748B]">Trung tâm kinh doanh</span>
-                    <span className="font-bold text-[#334155]">FHO Other HN</span>
+                    <span className="font-bold text-[#334155]">
+                      FHO Other HN
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-[#64748B]">Ngày tạo</span>
@@ -712,24 +908,9 @@ export default function CreatePostReportDetail({
                   </div>
                 </div>
               </div>
-            </div>
-
-            <div className="flex flex-col items-end gap-6">
-              <button
-                onClick={onBack}
-                className="flex items-center gap-2 text-gray-400 hover:text-[#00529C] transition-colors w-fit group"
-              >
-                <ChevronLeft
-                  size={18}
-                  className="group-hover:-translate-x-1 transition-transform"
-                />
-                <span className="text-[13px] font-medium">
-                  Quay lại danh sách
-                </span>
-              </button>
 
               <div className="flex items-center gap-3">
-                {mode === "create" ? (
+                {isApproveMode ? (
                   <>
                     <button
                       onClick={() => setShowImportModal(true)}
@@ -737,52 +918,6 @@ export default function CreatePostReportDetail({
                     >
                       <RefreshCcw size={16} />
                       Import dữ liệu
-                    </button>
-                    <button
-                      onClick={() =>
-                        triggerToast("Đang khởi tạo tệp tin xuất liệu...")
-                      }
-                      className="px-5 py-2.5 border border-[#00529C] text-[#00529C] rounded-lg text-[14px] font-bold hover:bg-blue-50 transition-all flex items-center gap-2 shadow-sm"
-                    >
-                      <Download size={16} />
-                      Export dữ liệu
-                    </button>
-                    <button
-                      onClick={() =>
-                        handleActionWithBack("Lưu dự thảo thành công!")
-                      }
-                      className="px-5 py-2.5 border border-[#00529C] text-[#00529C] rounded-lg text-[14px] font-bold hover:bg-blue-50 transition-all flex items-center gap-2 shadow-sm"
-                    >
-                      <Save size={16} />
-                      Lưu Dự thảo
-                    </button>
-                    <button
-                      onClick={() =>
-                        handleActionWithBack("Trình duyệt báo cáo thành công!")
-                      }
-                      className="px-8 py-2.5 bg-[#00529C] text-white rounded-lg text-[14px] font-bold hover:bg-[#00427D] transition-all flex items-center gap-2 shadow-md hover:shadow-lg"
-                    >
-                      <CheckCircle2 size={16} />
-                      Trình duyệt
-                    </button>
-                  </>
-                ) : isApproveMode ? (
-                  <>
-                    <button
-                      onClick={() => setShowImportModal(true)}
-                      className="px-5 py-2.5 border border-[#00529C] text-[#00529C] rounded-lg text-[14px] font-bold hover:bg-blue-50 transition-all flex items-center gap-2 shadow-sm"
-                    >
-                      <RefreshCcw size={16} />
-                      Import dữ liệu
-                    </button>
-                    <button
-                      onClick={() =>
-                        triggerToast("Đang khởi tạo tệp tin xuất liệu...")
-                      }
-                      className="px-5 py-2.5 border border-[#00529C] text-[#00529C] rounded-lg text-[14px] font-bold hover:bg-blue-50 transition-all flex items-center gap-2 shadow-sm"
-                    >
-                      <Download size={16} />
-                      Export dữ liệu
                     </button>
                     <button
                       onClick={() =>
@@ -820,31 +955,34 @@ export default function CreatePostReportDetail({
                 )}
               </div>
             </div>
-          </div>
+          )}
         </div>
 
         <div className="p-6 space-y-6">
           {/* General Info Card */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-            <div className="px-4 py-3 bg-[#FCFDFF] border-b border-gray-100 flex items-center gap-2 cursor-pointer group">
-              <div className="w-1 h-5 bg-[#00529C] rounded-full" />
-              <ChevronDown size={14} className="text-[#00529C]" />
-              <span className="text-[14px] font-bold text-[#002D56] font-sans uppercase tracking-wide">
-                Thông tin chung
-              </span>
-            </div>
-            <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-x-12 gap-y-6">
-                <InfoView label="Hãng" value="Apple" />
-                <InfoView
-                  label="Hình thức báo cáo"
-                  value={type === "pre" ? "Báo cáo trước" : "Báo cáo sau"}
-                />
-                <InfoView label="Thời gian" value="15/09/2025 - 15/09/2025" />
-                <InfoView label="Trung tâm kinh doanh" value="FHO Other HN" />
+          {mode !== "create" && (
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+              <div className="px-4 py-3 bg-[#FCFDFF] border-b border-gray-100 flex items-center gap-2 cursor-pointer group">
+                <div className="w-1 h-5 bg-[#00529C] rounded-full" />
+                <ChevronDown size={14} className="text-[#00529C]" />
+                <span className="text-[14px] font-bold text-[#002D56] font-sans uppercase tracking-wide">
+                  Thông tin chung
+                </span>
+              </div>
+              <div className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-x-12 gap-y-6">
+                  <InfoView label="Hãng" value="Apple" />
+                  <InfoView label="Diễn giải" value="Đề nghị xuất hàng báo cáo hãng quý 2" />
+                  <InfoView
+                    label="Hình thức báo cáo"
+                    value={type === "pre" ? "Báo cáo trước" : "Báo cáo sau"}
+                  />
+                  <InfoView label="Thời gian" value="15/09/2025 - 15/09/2025" />
+                  <InfoView label="Trung tâm kinh doanh" value="FHO Other HN" />
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Report List Card */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
@@ -1052,11 +1190,11 @@ export default function CreatePostReportDetail({
                           className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-[#00529C] transition-colors z-40 opacity-0 group-hover:opacity-100"
                         />
                       </th>
-                      {COLUMN_CONFIG.map((col) => (
+                      {COLUMN_CONFIG.map((col, cIdx) => (
                         <th
                           key={col.key}
                           style={{ width: columnWidths[col.key] }}
-                          className="px-6 py-4 text-[12px] font-bold text-[#002B49] uppercase font-sans bg-[#F8FAFC] border-b border-gray-200 whitespace-nowrap relative group"
+                          className={`px-6 py-4 text-[12px] font-bold text-[#002B49] uppercase font-sans border-b border-gray-200 whitespace-nowrap relative group ${cIdx > 4 ? "bg-orange-50 font-black" : "bg-[#F8FAFC]"}`}
                         >
                           {col.label}
                           <div
@@ -1092,11 +1230,11 @@ export default function CreatePostReportDetail({
                           >
                             {(idx + 1).toString().padStart(2, "0")}
                           </td>
-                          {COLUMN_CONFIG.map((col) => (
+                          {COLUMN_CONFIG.map((col, cIdx) => (
                             <td
                               key={col.key}
                               style={{ width: columnWidths[col.key] }}
-                              className="px-6 py-4 text-[12px] text-gray-700 whitespace-nowrap border-b border-gray-50 overflow-hidden text-ellipsis"
+                              className={`px-6 py-4 text-[12px] text-gray-700 border-b border-gray-50 ${(col.key === "itemName" || col.key === "ps") ? "whitespace-normal break-words leading-relaxed" : "whitespace-nowrap overflow-hidden text-ellipsis"} ${cIdx > 4 ? "bg-orange-50/50" : ""}`}
                             >
                               {renderCell(row, col.key)}
                             </td>
@@ -1136,7 +1274,7 @@ export default function CreatePostReportDetail({
                               <td
                                 key={col.key}
                                 style={{ width: columnWidths[col.key] }}
-                                className={`px-6 py-4 text-[12px] text-gray-700 whitespace-nowrap overflow-hidden text-ellipsis ${
+                                className={`px-6 py-4 text-[12px] text-gray-700 overflow-hidden ${(col.key === "itemName" || col.key === "ps") ? "whitespace-normal break-words leading-relaxed" : "whitespace-nowrap text-ellipsis"} ${
                                   showHighlight
                                     ? row.changeType === "add"
                                       ? "border-green-100"
@@ -1248,8 +1386,16 @@ export default function CreatePostReportDetail({
 
               {/* Pagination Footer */}
               <div className="mt-4 flex items-center justify-between pb-2">
-                <div className="text-[12px] text-gray-500">
-                  Tổng {currentTableData.length} bản ghi
+                <div className="flex flex-col gap-1">
+                  <div className="text-[12px] text-gray-500">
+                    Tổng {currentTableData.length} bản ghi
+                  </div>
+                  <div className="text-[12px] text-gray-500 flex items-center gap-2">
+                    <span>Tổng số lượng:</span>
+                    <span className="font-bold text-[#002B49]">
+                      {currentTableData.reduce((acc, row) => acc + (Number(row.reportQty) || 0), 0)}
+                    </span>
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="flex items-center">

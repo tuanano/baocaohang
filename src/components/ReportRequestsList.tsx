@@ -297,8 +297,9 @@ export default function ReportRequestsList({
         </h1>
         <button
           onClick={() => {
-            resetForm();
-            setIsModalOpen(true);
+            if (onCreateDetail) {
+              onCreateDetail("post", "quantity"); // Default to post/quantity, user can change later
+            }
           }}
           className="bg-[#00529C] hover:bg-[#00427D] text-white px-4 py-2 rounded-md flex items-center gap-2 text-[13px] font-medium transition-colors shadow-sm"
         >
@@ -306,131 +307,6 @@ export default function ReportRequestsList({
           Tạo mới
         </button>
       </div>
-
-      {/* Modal Backdrop */}
-      <AnimatePresence>
-        {isModalOpen && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsModalOpen(false)}
-              className="fixed inset-0 bg-black/40 z-40 backdrop-blur-[1px]"
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-2xl z-50 w-full max-w-2xl overflow-hidden border border-gray-100"
-            >
-              <div className="p-6">
-                <div className="flex justify-between items-center mb-8">
-                  <h2 className="text-[20px] font-bold text-[#002D56] font-sans">
-                    Tạo mới đề nghị báo cáo
-                  </h2>
-                  <button
-                    onClick={() => setIsModalOpen(false)}
-                    className="text-gray-400 hover:text-gray-600 transition-colors p-1"
-                  >
-                    <X size={24} />
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-2 gap-x-6 gap-y-6">
-                  <div className="col-span-2">
-                    <FilterField
-                      label="Hình thức báo cáo"
-                      placeholder="Chọn hình thức báo cáo"
-                      value={form.reportMethod}
-                      onChange={(val: string) =>
-                        setForm({ ...form, reportMethod: val })
-                      }
-                      options={["Báo cáo trước", "Báo cáo sau"]}
-                      required
-                    />
-                  </div>
-
-                  <AnimatePresence>
-                    {form.reportMethod !== "Báo cáo trước" && (
-                      <>
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: "auto", opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          className="col-span-1 overflow-hidden"
-                        >
-                          <FilterField
-                            label="Thời gian giao dịch (Từ ngày)"
-                            placeholder="DD/MM/YYYY"
-                            value={form.startDate}
-                            onChange={(val: string) =>
-                              setForm({ ...form, startDate: val })
-                            }
-                            isDate
-                            required
-                          />
-                        </motion.div>
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: "auto", opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          className="col-span-1 overflow-hidden"
-                        >
-                          <FilterField
-                            label="Thời gian giao dịch (Đến ngày)"
-                            placeholder="DD/MM/YYYY"
-                            value={form.endDate}
-                            onChange={(val: string) =>
-                              setForm({ ...form, endDate: val })
-                            }
-                            isDate
-                            required
-                          />
-                        </motion.div>
-                      </>
-                    )}
-                  </AnimatePresence>
-
-                  {/* Conditional Field: Show when "Báo cáo sau" is selected AND maybe other conditions?
-                      The user wants to REMOVE xknb for "Báo cáo trước".
-                      Current logic showed it ONLY for "Báo cáo trước".
-                      We will now hide it if "Báo cáo trước" is selected.
-                  */}
-
-                </div>
-
-                <div className="flex justify-end gap-4 mt-10">
-                  <button
-                    onClick={() => setIsModalOpen(false)}
-                    className="px-6 py-2 border border-[#00529C] text-[#00529C] font-medium rounded-lg hover:bg-blue-50 transition-colors text-[14px] min-w-[100px]"
-                  >
-                    Hủy
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (!isCreateFormValid) return;
-                      setIsModalOpen(false);
-                      if (onCreateDetail) {
-                        onCreateDetail(
-                          form.reportMethod === "Báo cáo trước"
-                            ? "pre"
-                            : "post",
-                          "quantity", // defaults to quantity
-                        );
-                      }
-                    }}
-                    disabled={!isCreateFormValid}
-                    className={`px-6 py-2 bg-[#00529C] text-white font-medium rounded-lg hover:bg-[#00427D] transition-colors text-[14px] min-w-[100px] ${!isCreateFormValid ? "opacity-50 cursor-not-allowed" : ""}`}
-                  >
-                    Tạo mới
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6">
         {/* Search bar and Filter toggle */}

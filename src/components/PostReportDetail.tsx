@@ -781,7 +781,7 @@ export default function PostReportDetail({
                       onClick={() =>
                         handleActionWithBack("Đã từ chối đề nghị báo cáo.")
                       }
-                      className="px-6 py-2.5 bg-white border border-red-500 text-red-500 rounded-lg text-[14px] font-bold hover:bg-red-50 transition-all flex items-center gap-2 shadow-sm"
+                      className="px-6 py-2.5 bg-white border text-red-500 rounded-lg text-[14px] font-bold hover:bg-red-50 transition-all flex items-center gap-2 shadow-sm"
                     >
                       <XCircle size={18} />
                       Từ chối

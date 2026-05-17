@@ -1,38 +1,26 @@
 export const BRANDS = [
+  { id: 'XMI', name: 'XIAOMI' },
+  { id: 'XMV', name: 'XIAOMI VN' },
   { id: 'APL', name: 'APPLE' },
+  { id: 'SAM', name: 'SAMSUNG' },
   { id: 'ASU', name: 'ASUS' },
   { id: 'DEL', name: 'DELL' },
-  { id: 'SAM', name: 'SAMSUNG' },
   { id: 'HPQ', name: 'HP' },
   { id: 'LEN', name: 'LENOVO' },
-  { id: 'ACE', name: 'ACER' },
-  { id: 'AMD', name: 'AMD' },
-  { id: 'ADB', name: 'ADOBE' },
 ];
 
 export const CATEGORIES_CS = [
+  { id: 'SP', name: 'SMART PHONE' },
   { id: '1B', name: 'Hàng hóa, dịch vụ SB3-WS' },
   { id: '1D', name: 'TRADE DISCOUNTS CEG' },
   { id: '1F', name: 'Hàng hóa, dịch vụ SG.FPP' },
-  { id: '2B', name: 'Hàng hóa, dịch vụ SG.SB1' },
-  { id: '2F', name: 'Hàng hóa, dịch vụ SG.FSS' },
-  { id: '3B', name: 'Hàng hóa, dịch vụ SG.SB2' },
-  { id: '3C', name: 'CONSUMABLES OF 3D MACHINE' },
-  { id: '3D', name: '3D PRINTER' },
-  { id: '3F', name: 'Hàng hóa, dịch vụ FCT-ITS' },
-  { id: '4B', name: 'Hàng hóa, dịch vụ SB3-NTT' },
 ];
 
 export const PRODUCT_LINES_PS = [
-  { id: 'PLCIS', name: 'POWER SUPPLIES CISCO' },
-  { id: 'K0DLL', name: 'PROMOTION GOODS NB DELL' },
+  { id: 'SPXMI', name: 'SMART PHONE XIAOMI' },
+  { id: 'SPXMV', name: 'SMART PHONE XIAOMI VN' },
   { id: 'NBDLL', name: 'NOTEBOOK DELL' },
   { id: 'OTMSF', name: 'OTHERS MICROSOFT' },
-  { id: 'SVXFU', name: 'SERVERS XFUSION' },
-  { id: 'K1COL', name: 'PROMOTION GOODS CB COLORFUL' },
-  { id: 'CBCOL', name: 'COMMERCIAL NOTEBOOK COLORFUL' },
-  { id: 'C1COL', name: 'TRADE DISCOUNTS CB COLORFUL' },
-  { id: 'A0COL', name: 'TRADE DISCOUNTS COLORFUL' },
 ];
 
 export const REPORT_TYPES = [
@@ -191,6 +179,35 @@ export const INITIAL_BRAND_REPORTS: ExportRecord[] = [
       cpuBrand: ["Apple"],
       osType: ["iOS"],
       poNumber: ["PO-123"]
+    }
+  },
+  {
+    id: "5",
+    reportCode: "BC_EXP_0005",
+    brand: "Xiaomi",
+    reportType: "Báo cáo Sell Through (Số lượng)",
+    tag: "Báo cáo Xiaomi Q2",
+    period: "01/04/2026 - 30/06/2026",
+    exporter: "thaohh5",
+    exportDate: "10/05/2026 14:20",
+    status: "success",
+    downloadUrl: "#",
+    parameters: {
+      fromDate: "01/04/2026",
+      toDate: "30/06/2026",
+      reportType: "Báo cáo Sell Through (Số lượng)",
+      tag: "Báo cáo Xiaomi Q2",
+      warehouseType: "Kho báo cáo",
+      company: ["FDC HN"],
+      org: ["A80"],
+      brand: ["XMI"],
+      productLine: ["SPXMI"],
+      productCode: ["70281468", "71055945"],
+      productName: [],
+      partNumber: [],
+      cpuBrand: [],
+      osType: [],
+      poNumber: []
     }
   },
 ];

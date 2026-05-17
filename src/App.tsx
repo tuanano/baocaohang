@@ -77,11 +77,15 @@ export default function App() {
                   <CreatePreReportDetail
                     category={reportCategory}
                     onBack={() => setCurrentView("list")}
+                    onTypeChange={(type) => setReportType(type)}
+                    onCategoryChange={(cat) => setReportCategory(cat)}
                   />
                 ) : (
                   <CreatePostReportDetail
                     category={reportCategory}
                     onBack={() => setCurrentView("list")}
+                    onTypeChange={(type) => setReportType(type)}
+                    onCategoryChange={(cat) => setReportCategory(cat)}
                   />
                 )
               ) : reportType === "pre" ? (
