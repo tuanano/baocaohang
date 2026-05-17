@@ -329,6 +329,23 @@ export default function CreatePreReportDetail({
   brandReports?: any[];
 }) {
   const [localMode, setLocalMode] = useState(initialMode);
+  const isView = localMode === "view";
+  
+  const [generalFilters, setGeneralFilters] = useState({
+    reportType: "pre",
+    company: "FDCHN",
+    brand: "XIAOMI",
+    ps: "SMART PHONE XIAOMI",
+    product: "",
+    partNumber: "",
+    customer: "",
+    invoiceNumber: "",
+    warehouseType: "",
+    cpuBrand: "",
+    osType: "",
+  });
+  const [isApplied, setIsApplied] = useState(false);
+
   const [showApproveConfirm, setShowApproveConfirm] = useState(false);
   const [showRejectConfirm, setShowRejectConfirm] = useState(false);
   const [reason, setReason] = useState("");
@@ -1353,8 +1370,6 @@ export default function CreatePreReportDetail({
     </div>
   );
 
-  const isView = localMode === "view";
-
   const showActionColumn =
     localMode === "create" || (isApproveMode && didFreshImport);
 
@@ -1382,16 +1397,8 @@ export default function CreatePreReportDetail({
           <div className="flex justify-between items-start pt-2">
             <div>
               <h1 className="text-[24px] font-bold text-[#002D56] font-sans tracking-tight leading-tight mb-4">
-                Chi tiết đề nghị báo cáo (Báo cáo trước)
+                {localMode === "create" ? "Tạo mới" : "Chi tiết"} đề nghị báo cáo (Báo cáo trước)
               </h1>
-              
-              <div className="space-y-1 mt-4 p-4 rounded bg-white">
-                <div className="flex items-center gap-6">
-                   <div className="text-[14px]">Người tạo: <span className="font-bold">trangntt299</span></div>
-                   <div className="text-[14px]">Ngày tạo: <span className="font-bold">29/04/2026 08:56</span></div>
-                </div>
-                <div className="text-[14px]">Số đề nghị: <span className="font-bold">DNBC26_0123456</span></div>
-              </div>
             </div>
 
             <div className="flex items-center gap-3">
@@ -1456,7 +1463,7 @@ export default function CreatePreReportDetail({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-6">
               {!isView && (
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[13px] font-semibold text-[#4A5568]">
@@ -1464,16 +1471,20 @@ export default function CreatePreReportDetail({
                   </label>
                   <div className="relative group">
                     <select
-                      value="pre"
-                      disabled={true}
-                      className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-[13px] focus:outline-none focus:ring-1 focus:ring-[#00529C] focus:border-[#00529C] appearance-none cursor-not-allowed font-medium text-gray-700"
+                      value={generalFilters.reportType}
+                      onChange={(e) => {
+                        const val = e.target.value as "pre" | "post";
+                        setGeneralFilters(prev => ({ ...prev, reportType: val }));
+                        if (onTypeChange) onTypeChange(val);
+                      }}
+                      className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-[13px] focus:outline-none focus:ring-1 focus:ring-[#00529C] focus:border-[#00529C] appearance-none"
                     >
                       <option value="pre">Báo cáo trước</option>
                       <option value="post">Báo cáo sau</option>
                     </select>
                     <ChevronDown
                       size={16}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none group-focus-within:text-[#00529C]"
                     />
                   </div>
                 </div>
@@ -1487,14 +1498,16 @@ export default function CreatePreReportDetail({
                   <input
                     type="date"
                     readOnly={isView}
-                    value={reportDates.startDate || "2026-04-29"}
+                    value={reportDates.startDate || (isView ? "2026-04-29" : "")}
                     onChange={(e) => setReportDates(prev => ({ ...prev, startDate: e.target.value }))}
                     className={`w-full px-3 py-1.5 border border-gray-300 rounded text-[12px] focus:outline-none focus:ring-1 focus:ring-[#00529C] focus:border-[#00529C] appearance-none ${isView ? "bg-gray-50 cursor-not-allowed font-medium text-gray-700" : "bg-white"}`}
                   />
-                  <Calendar
-                    size={14}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-                  />
+                  {!isView && (
+                    <Calendar
+                      size={14}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                    />
+                  )}
                 </div>
               </div>
 
@@ -1506,25 +1519,55 @@ export default function CreatePreReportDetail({
                   <input
                     type="date"
                     readOnly={isView}
-                    value={reportDates.endDate || "2026-05-29"}
+                    value={reportDates.endDate || (isView ? "2026-05-29" : "")}
                     onChange={(e) => setReportDates(prev => ({ ...prev, endDate: e.target.value }))}
                     className={`w-full px-3 py-1.5 border border-gray-300 rounded text-[12px] focus:outline-none focus:ring-1 focus:ring-[#00529C] focus:border-[#00529C] appearance-none ${isView ? "bg-gray-50 cursor-not-allowed font-medium text-gray-700" : "bg-white"}`}
                   />
-                  <Calendar
-                    size={14}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-                  />
+                  {!isView && (
+                    <Calendar
+                      size={14}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                    />
+                  )}
                 </div>
               </div>
 
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[13px] font-semibold text-[#4A5568]">
-                  Hãng <span className="text-red-500">*</span>
-                </label>
-                <span className="text-gray-700 font-medium text-[13px] px-3 py-2 bg-gray-50 border border-gray-100 rounded-md cursor-not-allowed">
-                  XIAOMI
-                </span>
-              </div>
+              {!isView ? (
+                <>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[13px] font-semibold text-[#4A5568]">
+                      Hãng <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative group">
+                      <select
+                        value={generalFilters.brand}
+                        onChange={(e) => setGeneralFilters(prev => ({ ...prev, brand: e.target.value }))}
+                        className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-[13px] focus:outline-none focus:ring-1 focus:ring-[#00529C] focus:border-[#00529C] appearance-none"
+                      >
+                        <option value="">Chọn hãng</option>
+                        {BRANDS.map((brand) => (
+                          <option key={brand.id} value={brand.id}>
+                            {brand.name}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown
+                        size={16}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none group-focus-within:text-[#00529C]"
+                      />
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[13px] font-semibold text-[#4A5568]">
+                    Hãng <span className="text-red-500">*</span>
+                  </label>
+                  <span className="text-gray-700 font-medium text-[13px] px-3 py-2 bg-gray-50 border border-gray-100 rounded-md cursor-not-allowed">
+                    XIAOMI
+                  </span>
+                </div>
+              )}
             </div>
 
             <div className="flex flex-col gap-1.5 mt-6">
@@ -1535,10 +1578,16 @@ export default function CreatePreReportDetail({
                 readOnly={isView}
                 rows={2}
                 placeholder="Nhập diễn giải báo cáo"
-                value="Đề nghị xuất hàng báo cáo hãng quý 2"
+                value={isView ? "Đề nghị xuất hàng báo cáo hãng quý 2" : undefined}
                 className={`w-full px-3 py-2 border border-gray-300 rounded-md text-[13px] focus:outline-none focus:ring-1 focus:ring-[#00529C] focus:border-[#00529C] resize-none ${isView ? "bg-gray-50 cursor-not-allowed font-medium text-gray-700" : "bg-white"}`}
               />
             </div>
+
+            {localMode !== "create" && !isView && (
+              <div className="flex justify-end gap-3 pt-6 border-t border-gray-100 italic font-medium text-gray-400">
+                Lưu ý: Màn hình Báo cáo trước dành cho việc tạo đề nghị xuất kho để báo cáo sau này.
+              </div>
+            )}
           </div>
         </div>
 

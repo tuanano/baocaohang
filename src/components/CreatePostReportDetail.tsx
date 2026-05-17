@@ -9,6 +9,7 @@ import {
 import {
   ChevronLeft,
   RefreshCcw,
+  Loader2,
   ChevronDown,
   Calendar,
   Flag,
@@ -134,6 +135,34 @@ const NEW_COLUMNS: { key: keyof TableRow; label: string }[] = [
   { key: "serialNumber", label: "Số SN/IMEI" },
 ];
 
+const LEDGER_COLUMNS: { key: keyof TableRow; label: string }[] = [
+  { key: "itemCode", label: "Mã sản phẩm" },
+  { key: "partNumber", label: "Part Number" },
+  { key: "itemName", label: "Tên sản phẩm" },
+  { key: "brand", label: "Hãng" },
+  { key: "ps", label: "PS" },
+  { key: "uom", label: "Đơn vị tính" },
+  { key: "reportQty", label: "Số lượng" },
+  { key: "reportInvoiceDate", label: "Ngày hóa đơn" },
+  { key: "reportInvoiceNumber", label: "Mã hóa đơn" },
+  { key: "reportCustomerId", label: "Mã khách hàng" },
+  { key: "reportCustomerName", label: "Tên khách hàng" },
+  { key: "serialNumber", label: "Số SN/IMEI" },
+];
+
+const MOCK_OPTIONS = {
+  companies: ["FDCHN", "FDCHCM", "FDCĐN", "FDCTH"],
+  brands: ["APPLE", "SAMSUNG", "XIAOMI", "DELL", "HP", "LENOVO"],
+  ps: ["SMARTPHONE", "LAPTOP", "TABLET", "ACCESSORIES"],
+  products: ["iPhone 13", "iPhone 14", "Galaxy S22", "Redmi Note 11"],
+  partNumbers: ["MZB0ARHEU", "PART-001", "PART-002"],
+  customers: ["HÀ DUY", "ĐIỆN MÁY XANH", "THẾ GIỚI DI ĐỘNG"],
+  cpuBrands: ["Intel", "AMD", "Apple Silicon", "MediaTek"],
+  osTypes: ["Windows", "Mac OS", "Linux", "Android", "iOS"],
+  warehouseTypes: ["Kho báo cáo", "Kho không báo cáo"],
+  businessCenters: ["FHO Other HN", "FHO Other HCM", "FHO HN", "FHO HCM"]
+};
+
 const mockCommonFields = {
   brandVendor: "XIAOMI",
   comName: "FDC HN",
@@ -215,8 +244,15 @@ const importChangesMock: TableRow[] = [
   {
     id: "L-005",
     ...mockCommonFields,
-    reportInvoiceDate: "25/04/2026",
-    reportInvoiceNumber: "",
+    reportInvoiceDate: "25/07/2026",
+    reportInvoiceNumber: "INV-DELAY-001",
+    changeType: "delete", // We'll interpret delete as "red" in highlighting if needed, or use a new type
+  },
+  {
+    id: "L-006",
+    ...mockCommonFields,
+    reportInvoiceDate: "25/08/2026",
+    reportInvoiceNumber: "INV-DELAY-002",
     changeType: "delete",
   },
   {
@@ -254,6 +290,37 @@ export default function CreatePostReportDetail({
     startDate: "",
     endDate: "",
   });
+  
+  const [generalFilters, setGeneralFilters] = useState({
+    reportType: "post",
+    company: [] as string[],
+    businessCenter: [] as string[],
+    brand: [] as string[],
+    ps: [] as string[],
+    product: [] as string[],
+    partNumber: [] as string[],
+    customer: [] as string[],
+    invoiceNumber: "",
+    warehouseType: "",
+    cpuBrand: [] as string[],
+    osType: [] as string[],
+  });
+  const [isApplied, setIsApplied] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [showSnModal, setShowSnModal] = useState(false);
+  const [selectedSnRow, setSelectedSnRow] = useState<TableRow | null>(null);
+
+  const validateGeneralInfo = () => {
+    const errors: Record<string, string> = {};
+    if (!generalFilters.reportType) errors.reportType = "Vui lòng chọn hình thức báo cáo";
+    if (!reportDates.startDate) errors.startDate = "Vui lòng chọn ngày bắt đầu";
+    if (!reportDates.endDate) errors.endDate = "Vui lòng chọn ngày kết thúc";
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const type = "post" as string;
   const mode = "create" as string;
   const isApproveMode = false;
@@ -267,14 +334,24 @@ export default function CreatePostReportDetail({
   >("idle");
   const [hasImportedData, setHasImportedData] = useState(mode === "view");
   const [didFreshImport, setDidFreshImport] = useState(false);
+  const [importType, setImportType] = useState<"success" | "error" | "idle">("idle");
 
   // Stateful data for editing
   const [rows, setRows] = useState<TableRow[]>(() => {
     if (mode === "create") {
-      return tableData.map(r => {
+      return tableData.map((r, idx) => {
         const newRow = { ...r };
+        // Generate mock data for invoice fields if they are empty
+        newRow.reportInvoiceDate = `1${idx + 1}/05/2026`;
+        newRow.reportInvoiceNumber = `INV-2026-${1000 + idx}`;
+        newRow.reportCustomerId = `CUST-${2000 + idx}`;
+        newRow.reportCustomerName = `Khách hàng ${idx + 1}`;
+        newRow.serialNumber = "SN123456789";
+
         NEW_COLUMNS.slice(5).forEach(col => {
-          (newRow as any)[col.key] = "";
+          if (!["reportInvoiceDate", "reportInvoiceNumber", "reportCustomerId", "reportCustomerName", "serialNumber"].includes(col.key)) {
+            (newRow as any)[col.key] = "";
+          }
         });
         return newRow;
       });
@@ -285,6 +362,40 @@ export default function CreatePostReportDetail({
   // Advanced Filter State
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [tableSearchTerm, setTableSearchTerm] = useState("");
+  const [showImportFormModal, setShowImportFormModal] = useState(false);
+
+  const [importSimulationState, setImportSimulationState] = useState<{
+    status: "idle" | "uploading" | "success" | "error";
+    progress: number;
+  }>({ status: "idle", progress: 0 });
+
+  const startImportSimulation = (type: "success" | "error") => {
+    setImportSimulationState({ status: "uploading", progress: 0 });
+    const interval = setInterval(() => {
+      setImportSimulationState(prev => {
+        if (prev.progress >= 100) {
+          clearInterval(interval);
+          return prev;
+        }
+        return { ...prev, progress: prev.progress + 10 };
+      });
+    }, 200);
+
+    setTimeout(() => {
+      if (type === "success") {
+        setImportSimulationState({ status: "success", progress: 100 });
+        setTimeout(() => {
+          setHasImportedData(true);
+          setDidFreshImport(true);
+          setShowImportFormModal(false);
+          setActiveTab("import");
+          triggerToast("Import dữ liệu thành công!");
+        }, 500);
+      } else {
+        setImportSimulationState({ status: "error", progress: 80 });
+      }
+    }, 2500);
+  };
   const [tableFilters, setTableFilters] = useState({
     reportCustomerId: "",
     reportCustomerName: "",
@@ -339,62 +450,63 @@ export default function CreatePostReportDetail({
   };
 
   const applyFiltering = (data: TableRow[]) => {
+    if (!data) return [];
     return data.filter((item) => {
       const matchesSearch =
         !tableSearchTerm ||
-        item.itemCode.toLowerCase().includes(tableSearchTerm.toLowerCase()) ||
-        item.itemName.toLowerCase().includes(tableSearchTerm.toLowerCase()) ||
-        item.reportInvoiceNumber
+        (item.itemCode || "").toLowerCase().includes(tableSearchTerm.toLowerCase()) ||
+        (item.itemName || "").toLowerCase().includes(tableSearchTerm.toLowerCase()) ||
+        (item.reportInvoiceNumber || "")
           .toLowerCase()
           .includes(tableSearchTerm.toLowerCase()) ||
-        item.reportCustomerId
+        (item.reportCustomerId || "")
           .toLowerCase()
           .includes(tableSearchTerm.toLowerCase()) ||
-        item.reportCustomerName
+        (item.reportCustomerName || "")
           .toLowerCase()
           .includes(tableSearchTerm.toLowerCase());
 
       const matchesCustomerId =
         !tableFilters.reportCustomerId ||
-        item.reportCustomerId
+        (item.reportCustomerId || "")
           .toLowerCase()
           .includes(tableFilters.reportCustomerId.toLowerCase());
       const matchesCustomerName =
         !tableFilters.reportCustomerName ||
-        item.reportCustomerName
+        (item.reportCustomerName || "")
           .toLowerCase()
           .includes(tableFilters.reportCustomerName.toLowerCase());
       const matchesTaxId =
         !tableFilters.reportTaxId ||
-        item.reportTaxId
+        (item.reportTaxId || "")
           .toLowerCase()
           .includes(tableFilters.reportTaxId.toLowerCase());
       const matchesInvoiceDate =
         !tableFilters.reportInvoiceDate ||
-        item.reportInvoiceDate
+        (item.reportInvoiceDate || "")
           .toLowerCase()
           .includes(tableFilters.reportInvoiceDate.toLowerCase());
       const matchesInvoiceNumber =
         !tableFilters.reportInvoiceNumber ||
-        item.reportInvoiceNumber
+        (item.reportInvoiceNumber || "")
           .toLowerCase()
           .includes(tableFilters.reportInvoiceNumber.toLowerCase());
       const matchesPs =
         !tableFilters.ps ||
-        item.ps.toLowerCase().includes(tableFilters.ps.toLowerCase());
+        (item.ps || "").toLowerCase().includes(tableFilters.ps.toLowerCase());
       const matchesItemCode =
         !tableFilters.itemCode ||
-        item.itemCode
+        (item.itemCode || "")
           .toLowerCase()
           .includes(tableFilters.itemCode.toLowerCase());
       const matchesPartNumber =
         !tableFilters.partNumber ||
-        item.partNumber
+        (item.partNumber || "")
           .toLowerCase()
           .includes(tableFilters.partNumber.toLowerCase());
       const matchesItemName =
         !tableFilters.itemName ||
-        item.itemName
+        (item.itemName || "")
           .toLowerCase()
           .includes(tableFilters.itemName.toLowerCase());
 
@@ -414,17 +526,22 @@ export default function CreatePostReportDetail({
   };
 
   const COLUMN_CONFIG = useMemo(() => {
+    if (activeTab === "ledger") return LEDGER_COLUMNS;
     return NEW_COLUMNS;
-  }, []);
+  }, [activeTab]);
 
   // Column Resizing State
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>(
     () => {
       const initial: Record<string, number> = { no: 60 };
-      NEW_COLUMNS.forEach((col) => {
-        let baseWidth = col.key === "itemName" ? 250 : 120;
-        const estimated = Math.max(baseWidth, col.label.length * 9 + 40);
-        initial[col.key] = estimated;
+      const allPossibleCols = [...NEW_COLUMNS, ...LEDGER_COLUMNS];
+      allPossibleCols.forEach((col) => {
+        if (!initial[col.key]) {
+          let baseWidth = col.key === "itemName" ? 250 : 120;
+          const label = col.label || "";
+          const estimated = Math.max(baseWidth, label.length * 9 + 40);
+          initial[col.key] = estimated;
+        }
       });
       return initial;
     },
@@ -571,6 +688,7 @@ export default function CreatePostReportDetail({
   };
 
   const currentTableData = useMemo(() => {
+    if (!isApplied) return [];
     let baseData: TableRow[] = [];
     if (activeTab === "ledger") {
       baseData = rows;
@@ -587,6 +705,7 @@ export default function CreatePostReportDetail({
   }, [
     activeTab,
     rows,
+    isApplied,
     importChangesMock,
     hasImportedData,
     showHighlight,
@@ -599,6 +718,21 @@ export default function CreatePostReportDetail({
   };
 
   const renderCell = (row: TableRow, field: keyof TableRow) => {
+    if (field === "serialNumber") {
+      return (
+        <button 
+          onClick={() => {
+            setSelectedSnRow(row);
+            setShowSnModal(true);
+          }}
+          className="text-[#00529C] hover:underline flex items-center gap-1 font-medium"
+        >
+          Xem thông tin
+          <ExternalLink size={12} />
+        </button>
+      );
+    }
+
     if (field === "reportQty" && category === "serial") {
       return "1";
     }
@@ -702,11 +836,310 @@ export default function CreatePostReportDetail({
     </div>
   );
 
-  const showActionColumn =
-    mode === "create" || (isApproveMode && didFreshImport);
+  const MultiSelectCustom = ({ 
+    label, 
+    options, 
+    selected, 
+    onChange, 
+    placeholder = "Chọn...",
+    required = false
+  }: { 
+    label: string; 
+    options: string[]; 
+    selected: string[]; 
+    onChange: (vals: string[]) => void;
+    placeholder?: string;
+    required?: boolean;
+  }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+      const handleClickOutside = (event: MouseEvent) => {
+        if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+          setIsOpen(false);
+        }
+      };
+      document.addEventListener("mousedown", handleClickOutside as any);
+      return () => document.removeEventListener("mousedown", handleClickOutside as any);
+    }, []);
+
+    const toggleOption = (option: string) => {
+      if (selected.includes(option)) {
+        onChange(selected.filter(i => i !== option));
+      } else {
+        onChange([...selected, option]);
+      }
+    };
+
+    return (
+      <div className="flex flex-col gap-1.5 relative" ref={containerRef}>
+        <label className="text-[13px] font-semibold text-[#4A5568]">
+          {label} {required && <span className="text-red-500">*</span>}
+        </label>
+        <div 
+          onClick={() => setIsOpen(!isOpen)}
+          className={`w-full px-3 py-2 bg-white border ${isOpen ? "border-[#00529C] ring-1 ring-[#00529C]" : "border-gray-300"} rounded-md text-[13px] focus:outline-none cursor-pointer flex justify-between items-center min-h-[38px] transition-all`}
+        >
+          <span className={selected.length === 0 ? "text-gray-400" : "text-gray-900 overflow-hidden text-ellipsis whitespace-nowrap"}>
+            {selected.length === 0 ? placeholder : selected.join(", ")}
+          </span>
+          <ChevronDown size={16} className={`text-gray-400 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+        </div>
+        
+        <AnimatePresence>
+          {isOpen && (
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="absolute top-full left-0 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-[100] max-h-60 overflow-y-auto"
+            >
+              <div className="p-1">
+                {options.map(opt => (
+                  <div 
+                    key={opt}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleOption(opt);
+                    }}
+                    className="px-3 py-2 hover:bg-blue-50 flex items-center gap-2 cursor-pointer text-[13px] rounded transition-colors"
+                  >
+                    <div className={`w-4 h-4 border rounded flex items-center justify-center transition-colors ${selected.includes(opt) ? "bg-[#00529C] border-[#00529C]" : "border-gray-300 bg-white"}`}>
+                      {selected.includes(opt) && <Check size={12} className="text-white" />}
+                    </div>
+                    <span className={selected.includes(opt) ? "font-semibold text-[#00529C]" : "text-gray-700"}>{opt}</span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  };
+
+  const SNPopup = () => (
+    <AnimatePresence>
+      {showSnModal && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowSnModal(false)}
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden"
+          >
+            <div className="px-6 py-4 bg-[#F8FAFC] border-b border-gray-100 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-[#00529C]">
+                  <HelpCircle size={20} />
+                </div>
+                <div>
+                  <h3 className="text-[16px] font-bold text-[#002D56]">Thông tin số SN/IMEI</h3>
+                  <p className="text-[12px] text-gray-500">Mã sản phẩm: {selectedSnRow?.itemCode}</p>
+                </div>
+              </div>
+              <button onClick={() => setShowSnModal(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                <X size={20} className="text-gray-400" />
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                  <span className="text-[12px] text-gray-500 block mb-1">Số SN/IMEI</span>
+                  <span className="text-[14px] font-bold text-[#002D56]">{selectedSnRow?.serialNumber || "N/A"}</span>
+                </div>
+                <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                  <span className="text-[12px] text-gray-500 block mb-1">Mã hóa đơn</span>
+                  <span className="text-[14px] font-bold text-[#002D56]">{selectedSnRow?.reportInvoiceNumber || "N/A"}</span>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <h4 className="text-[13px] font-bold text-gray-700 flex items-center gap-2">
+                  <History size={14} className="text-[#00529C]" />
+                  Chi tiết thiết bị
+                </h4>
+                <div className="grid grid-cols-1 gap-2">
+                  {[
+                    { label: "Tên sản phẩm", value: selectedSnRow?.itemName },
+                    { label: "Hãng", value: selectedSnRow?.brand },
+                    { label: "PS", value: selectedSnRow?.ps },
+                    { label: "Đơn vị tính", value: selectedSnRow?.uom },
+                  ].map((item, idx) => (
+                    <div key={idx} className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
+                      <span className="text-[13px] text-gray-500">{item.label}</span>
+                      <span className="text-[13px] font-medium text-gray-900">{item.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end">
+              <button 
+                onClick={() => setShowSnModal(false)}
+                className="px-6 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-[13px] font-bold hover:bg-gray-50 transition-all shadow-sm"
+              >
+                Đóng
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
+  );
+
+  const ImportFormPopup = () => (
+    <AnimatePresence>
+      {showImportFormModal && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => {
+              if (importSimulationState.status !== "uploading") setShowImportFormModal(false);
+            }}
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            className="relative w-full max-w-md bg-white rounded-lg shadow-xl overflow-hidden"
+          >
+            <div className="px-6 py-4 bg-white border-b border-gray-100 flex items-center justify-between">
+              <h3 className="text-[18px] font-bold text-[#002D56]">Import dữ liệu báo cáo</h3>
+              <button 
+                onClick={() => setShowImportFormModal(false)}
+                disabled={importSimulationState.status === "uploading"}
+                className="p-1 hover:bg-gray-100 rounded-full transition-colors disabled:opacity-30"
+              >
+                <X size={20} className="text-gray-400" />
+              </button>
+            </div>
+            
+            <div className="p-6">
+              {importSimulationState.status === "idle" || importSimulationState.status === "error" ? (
+                <div className="space-y-6">
+                  <div className="flex justify-between items-center bg-blue-50/50 p-4 rounded-lg border border-blue-100/50">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded bg-[#00529C] flex items-center justify-center text-white">
+                        <Download size={20} />
+                      </div>
+                      <div>
+                        <p className="text-[13px] font-bold text-[#002D56]">Tải file mẫu</p>
+                        <p className="text-[11px] text-gray-500">Sử dụng file excel mẫu của hệ thống</p>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => triggerToast("Đang tải file mẫu...")}
+                      className="text-[12px] font-bold text-[#00529C] hover:underline"
+                    >
+                      Bấm để tải về
+                    </button>
+                  </div>
+
+                  <div className="space-y-3">
+                    <label className="text-[13px] font-bold text-[#002D56]">Chọn file từ máy tính <span className="text-red-500">*</span></label>
+                    <div className="flex flex-col items-center justify-center p-10 border-2 border-dashed border-gray-200 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer relative group">
+                      <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-gray-400 mb-3 border border-gray-100 shadow-sm group-hover:text-[#00529C] transition-colors">
+                        <Upload size={24} />
+                      </div>
+                      <span className="text-[13px] text-gray-600 font-medium">Click hoặc kéo thả file để tải lên</span>
+                      <span className="text-[11px] text-gray-400 mt-1 italic">Hỗ trợ định dạng .xlsx, .xls</span>
+                      <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" />
+                    </div>
+                  </div>
+
+                  {importSimulationState.status === "error" && (
+                    <div className="p-3 bg-red-50 border border-red-100 rounded-lg flex items-start gap-2">
+                      <XCircle size={16} className="text-red-500 shrink-0 mt-0.5" />
+                      <p className="text-[12px] text-red-700">Dữ liệu trong file không hợp lệ. Vui lòng kiểm tra lại.</p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-10 space-y-6">
+                  <div className="relative w-32 h-32">
+                    <svg className="w-full h-full transform -rotate-90">
+                      <circle
+                        cx="64"
+                        cy="64"
+                        r="60"
+                        stroke="currentColor"
+                        strokeWidth="8"
+                        fill="transparent"
+                        className="text-gray-100"
+                      />
+                      <circle
+                        cx="64"
+                        cy="64"
+                        r="60"
+                        stroke="currentColor"
+                        strokeWidth="8"
+                        strokeDasharray={376.99}
+                        strokeDashoffset={376.99 * (1 - importSimulationState.progress / 100)}
+                        fill="transparent"
+                        className="text-[#00529C] transition-all duration-300"
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-[24px] font-bold text-[#002D56]">{importSimulationState.progress}%</span>
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-[16px] font-bold text-[#002D56]">Đang tải lên dữ liệu...</p>
+                    <p className="text-[12px] text-gray-500 mt-1">Vui lòng không đóng cửa sổ này</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
+              <button 
+                onClick={() => setShowImportFormModal(false)}
+                disabled={importSimulationState.status === "uploading"}
+                className="px-6 py-2 border border-gray-300 text-gray-600 rounded text-[13px] font-bold hover:bg-gray-100 transition-all disabled:opacity-50"
+              >
+                Bỏ qua
+              </button>
+              <button 
+                onClick={() => startImportSimulation("success")}
+                disabled={importSimulationState.status === "uploading"}
+                className="px-8 py-2 bg-[#00529C] text-white rounded text-[13px] font-bold hover:bg-[#00427D] transition-all shadow-md disabled:bg-gray-400"
+              >
+                {importSimulationState.status === "uploading" ? (
+                  <div className="flex items-center gap-2">
+                    <Loader2 size={16} className="animate-spin" />
+                    Đang xử lý
+                  </div>
+                ) : (
+                  "Tải lên"
+                )}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
+  );
+
+  const showActionColumn = false;
 
   return (
     <div className="flex flex-col min-h-screen bg-[#F1F5F9]">
+      <SNPopup />
+      <ImportFormPopup />
       {/* Header Section */}
       <div className="bg-white border-b border-gray-200 shadow-sm">
         <div className="px-8 py-6 space-y-6">
@@ -735,13 +1168,6 @@ export default function CreatePostReportDetail({
             <div className="flex items-center gap-3">
               {mode === "create" && (
                 <>
-                  <button
-                    onClick={() => setShowImportModal(true)}
-                    className="px-4 py-2.5 border border-[#00529C] text-[#00529C] rounded-lg text-[13px] font-bold hover:bg-blue-50 transition-all flex items-center gap-2 shadow-sm"
-                  >
-                    <RefreshCcw size={16} />
-                    Import
-                  </button>
                   <button
                     onClick={() =>
                       handleActionWithBack("Lưu dự thảo thành công!")
@@ -774,15 +1200,16 @@ export default function CreatePostReportDetail({
                 </span>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-4">
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[13px] font-semibold text-[#4A5568]">
                     Hình thức báo cáo <span className="text-red-500">*</span>
                   </label>
                   <div className="relative group">
                     <select
-                      value="post"
+                      value={generalFilters.reportType}
                       onChange={(e) => {
+                        setGeneralFilters(prev => ({ ...prev, reportType: e.target.value }));
                         if (onTypeChange) {
                           onTypeChange(e.target.value as "pre" | "post");
                         }
@@ -807,19 +1234,21 @@ export default function CreatePostReportDetail({
                     <input
                       type="date"
                       value={reportDates.startDate}
-                      onChange={(e) =>
+                      onChange={(e) => {
                         setReportDates((prev) => ({
                           ...prev,
                           startDate: e.target.value,
-                        }))
-                      }
-                      className="w-full px-3 py-1.5 bg-white border border-gray-300 rounded text-[12px] focus:outline-none focus:ring-1 focus:ring-[#00529C] focus:border-[#00529C] appearance-none"
+                        }));
+                        if (e.target.value) setFormErrors(prev => ({ ...prev, startDate: "" }));
+                      }}
+                      className={`w-full px-3 py-1.5 bg-white border ${formErrors.startDate ? "border-red-500" : "border-gray-300"} rounded text-[12px] focus:outline-none focus:ring-1 focus:ring-[#00529C] focus:border-[#00529C] appearance-none`}
                     />
                     <Calendar
                       size={14}
                       className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
                     />
                   </div>
+                  {formErrors.startDate && <span className="text-red-500 text-[11px] mt-1">{formErrors.startDate}</span>}
                 </div>
 
                 <div className="flex flex-col gap-1.5">
@@ -830,40 +1259,124 @@ export default function CreatePostReportDetail({
                     <input
                       type="date"
                       value={reportDates.endDate}
-                      onChange={(e) =>
+                      onChange={(e) => {
                         setReportDates((prev) => ({
                           ...prev,
                           endDate: e.target.value,
-                        }))
-                      }
-                      className="w-full px-3 py-1.5 bg-white border border-gray-300 rounded text-[12px] focus:outline-none focus:ring-1 focus:ring-[#00529C] focus:border-[#00529C] appearance-none"
+                        }));
+                        if (e.target.value) setFormErrors(prev => ({ ...prev, endDate: "" }));
+                      }}
+                      className={`w-full px-3 py-1.5 bg-white border ${formErrors.endDate ? "border-red-500" : "border-gray-300"} rounded text-[12px] focus:outline-none focus:ring-1 focus:ring-[#00529C] focus:border-[#00529C] appearance-none`}
                     />
                     <Calendar
                       size={14}
                       className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
                     />
                   </div>
+                  {formErrors.endDate && <span className="text-red-500 text-[11px] mt-1">{formErrors.endDate}</span>}
+                </div>
+
+                <MultiSelectCustom
+                  label="Công ty"
+                  options={MOCK_OPTIONS.companies}
+                  selected={generalFilters.company}
+                  onChange={(vals) => setGeneralFilters(prev => ({ ...prev, company: vals }))}
+                  placeholder="Chọn công ty"
+                />
+
+                <MultiSelectCustom
+                  label="Trung tâm kinh doanh"
+                  options={MOCK_OPTIONS.businessCenters}
+                  selected={generalFilters.businessCenter}
+                  onChange={(vals) => setGeneralFilters(prev => ({ ...prev, businessCenter: vals }))}
+                  placeholder="Chọn trung tâm kinh doanh"
+                />
+
+                <MultiSelectCustom
+                  label="Hãng"
+                  options={MOCK_OPTIONS.brands}
+                  selected={generalFilters.brand}
+                  onChange={(vals) => {
+                    setGeneralFilters(prev => ({ ...prev, brand: vals }));
+                  }}
+                  placeholder="Chọn hãng"
+                />
+
+                <MultiSelectCustom
+                  label="PS"
+                  options={MOCK_OPTIONS.ps}
+                  selected={generalFilters.ps}
+                  onChange={(vals) => setGeneralFilters(prev => ({ ...prev, ps: vals }))}
+                  placeholder="Chọn PS"
+                />
+
+                <MultiSelectCustom
+                  label="Sản phẩm"
+                  options={MOCK_OPTIONS.products}
+                  selected={generalFilters.product}
+                  onChange={(vals) => setGeneralFilters(prev => ({ ...prev, product: vals }))}
+                  placeholder="Chọn sản phẩm"
+                />
+
+                <MultiSelectCustom
+                  label="Part Number"
+                  options={MOCK_OPTIONS.partNumbers}
+                  selected={generalFilters.partNumber}
+                  onChange={(vals) => setGeneralFilters(prev => ({ ...prev, partNumber: vals }))}
+                  placeholder="Chọn Part Number"
+                />
+
+                <MultiSelectCustom
+                  label="Khách hàng"
+                  options={MOCK_OPTIONS.customers}
+                  selected={generalFilters.customer}
+                  onChange={(vals) => setGeneralFilters(prev => ({ ...prev, customer: vals }))}
+                  placeholder="Chọn khách hàng"
+                />
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[13px] font-semibold text-[#4A5568]">Số hoá đơn bán</label>
+                  <input
+                    type="text"
+                    value={generalFilters.invoiceNumber}
+                    placeholder="Nhập số hoá đơn"
+                    onChange={(e) => setGeneralFilters(prev => ({ ...prev, invoiceNumber: e.target.value }))}
+                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-[13px] focus:outline-none focus:ring-1 focus:ring-[#00529C] focus:border-[#00529C]"
+                  />
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[13px] font-semibold text-[#4A5568]">
-                    Hãng <span className="text-red-500">*</span>
-                  </label>
+                  <label className="text-[13px] font-semibold text-[#4A5568]">Loại Kho</label>
                   <div className="relative group">
-                    <select className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-[13px] focus:outline-none focus:ring-1 focus:ring-[#00529C] focus:border-[#00529C] appearance-none">
-                      <option value="">Chọn hãng</option>
-                      {BRANDS.map((brand) => (
-                        <option key={brand.id} value={brand.id}>
-                          {brand.name}
-                        </option>
+                    <select
+                      value={generalFilters.warehouseType}
+                      onChange={(e) => setGeneralFilters(prev => ({ ...prev, warehouseType: e.target.value }))}
+                      className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-[13px] focus:outline-none focus:ring-1 focus:ring-[#00529C] focus:border-[#00529C] appearance-none"
+                    >
+                      <option value="">Chọn loại kho</option>
+                      {MOCK_OPTIONS.warehouseTypes.map(opt => (
+                        <option key={opt} value={opt}>{opt}</option>
                       ))}
                     </select>
-                    <ChevronDown
-                      size={16}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none group-focus-within:text-[#00529C]"
-                    />
+                    <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none group-focus-within:text-[#00529C]" />
                   </div>
                 </div>
+
+                <MultiSelectCustom
+                  label="CPU Brand"
+                  options={MOCK_OPTIONS.cpuBrands}
+                  selected={generalFilters.cpuBrand}
+                  onChange={(vals) => setGeneralFilters(prev => ({ ...prev, cpuBrand: vals }))}
+                  placeholder="Chọn CPU Brand"
+                />
+
+                <MultiSelectCustom
+                  label="Loại hệ điều hành"
+                  options={MOCK_OPTIONS.osTypes}
+                  selected={generalFilters.osType}
+                  onChange={(vals) => setGeneralFilters(prev => ({ ...prev, osType: vals }))}
+                  placeholder="Chọn loại HĐH"
+                />
               </div>
 
               <div className="flex flex-col gap-1.5">
@@ -875,6 +1388,57 @@ export default function CreatePostReportDetail({
                   placeholder="Nhập diễn giải báo cáo"
                   className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-[13px] focus:outline-none focus:ring-1 focus:ring-[#00529C] focus:border-[#00529C] resize-none"
                 />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  onClick={() => {
+                    setGeneralFilters({
+                      reportType: "post",
+                      company: [],
+                      brand: [],
+                      ps: [],
+                      product: [],
+                      partNumber: [],
+                      customer: [],
+                      invoiceNumber: "",
+                      warehouseType: "",
+                      cpuBrand: [],
+                      osType: [],
+                    });
+                    setReportDates({ startDate: "", endDate: "" });
+                    setIsApplied(false);
+                  }}
+                  className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg text-[13px] font-bold hover:bg-gray-50 transition-all flex items-center gap-2"
+                >
+                  Reset
+                </button>
+                <button
+                  onClick={() => {
+                    if (!validateGeneralInfo()) {
+                      triggerToast("Vui lòng nhập đầy đủ các trường bắt buộc!");
+                      return;
+                    }
+                    setIsLoading(true);
+                    setIsApplied(false);
+                    setTimeout(() => {
+                      setIsApplied(true);
+                      setIsLoading(false);
+                      triggerToast("Dữ liệu đã được tải thành công!");
+                    }, 1000);
+                  }}
+                  disabled={isLoading}
+                  className="px-8 py-2 bg-[#00529C] text-white rounded-lg text-[13px] font-bold hover:bg-[#00427D] transition-all flex items-center gap-2 shadow-md hover:shadow-lg disabled:opacity-50"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      Đang xử lý...
+                    </>
+                  ) : (
+                    "Áp dụng"
+                  )}
+                </button>
               </div>
             </div>
           ) : (
@@ -970,15 +1534,27 @@ export default function CreatePostReportDetail({
                 </span>
               </div>
               <div className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-x-12 gap-y-6">
-                  <InfoView label="Hãng" value="Apple" />
-                  <InfoView label="Diễn giải" value="Đề nghị xuất hàng báo cáo hãng quý 2" />
-                  <InfoView
-                    label="Hình thức báo cáo"
-                    value={type === "pre" ? "Báo cáo trước" : "Báo cáo sau"}
+                <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-x-12 gap-y-6">
+                  <InfoView 
+                    label="Hình thức báo cáo" 
+                    value={type === "pre" ? "Báo cáo trước" : "Báo cáo sau"} 
                   />
-                  <InfoView label="Thời gian" value="15/09/2025 - 15/09/2025" />
+                  <InfoView label="Kỳ báo cáo (từ ngày)" value="01/04/2026" />
+                  <InfoView label="Kỳ báo cáo (tới ngày)" value="30/04/2026" />
+                  <InfoView label="Công ty" value="FDCHN" />
                   <InfoView label="Trung tâm kinh doanh" value="FHO Other HN" />
+                  <InfoView label="Hãng" value="XIAOMI" />
+                  <InfoView label="PS" value="SMARTPHONE" />
+                  <InfoView label="Sản phẩm" value="Redmi Note 11 Pro" />
+                  <InfoView label="Part Number" value="MZB0ARHEU" />
+                  <InfoView label="Khách hàng" value="CÔNG TY TNHH CÔNG NGHỆ HÀ DUY" />
+                  <InfoView label="Số hoá đơn bán" value="INV-2026-001" />
+                  <InfoView label="Loại Kho" value="Kho báo cáo" />
+                  <InfoView label="CPU Brand" value="MediaTek" />
+                  <InfoView label="Loại hệ điều hành" value="Android" />
+                </div>
+                <div className="mt-6">
+                  <InfoView label="Diễn giải" value="Đề nghị xuất hàng báo cáo hãng quý 2 năm 2026, đối chiếu dữ liệu kinh doanh thực tế tại trung tâm HN." />
                 </div>
               </div>
             </div>
@@ -1046,6 +1622,25 @@ export default function CreatePostReportDetail({
 
               {/* Table Filters - Now inside the content area for each tab */}
               <div className="mb-6 space-y-4">
+                {activeTab === "import" && (
+                  <div className="flex items-center gap-2 mb-4">
+                    <button 
+                       onClick={() => triggerToast("Đang chuẩn bị tệp tin export...")}
+                       className="flex items-center gap-2 text-[13px] font-bold px-4 py-2.5 rounded-md transition-all border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 shadow-sm"
+                    >
+                      <Download size={16} />
+                      Export
+                    </button>
+                    <button 
+                       onClick={() => setShowImportFormModal(true)}
+                       className="flex items-center gap-2 text-[13px] font-bold px-4 py-2.5 rounded-md transition-all bg-[#00529C] text-white hover:bg-[#00427D] shadow-md"
+                    >
+                      <Upload size={16} />
+                      Import
+                    </button>
+                  </div>
+                )}
+
                 <div className="flex items-center gap-4">
                   <div className="relative flex-1">
                     <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 pointer-events-none">
@@ -1067,6 +1662,7 @@ export default function CreatePostReportDetail({
                       </button>
                     )}
                   </div>
+                  
                   <button
                     onClick={() => setIsFilterOpen(!isFilterOpen)}
                     className={`flex items-center gap-2 text-[13px] font-medium px-4 py-2.5 rounded-md transition-colors border ${isFilterOpen ? "text-[#00529C] bg-blue-50 border-blue-100" : "text-gray-600 bg-white border-gray-200 hover:bg-gray-50"}`}
@@ -1194,7 +1790,7 @@ export default function CreatePostReportDetail({
                         <th
                           key={col.key}
                           style={{ width: columnWidths[col.key] }}
-                          className={`px-6 py-4 text-[12px] font-bold text-[#002B49] uppercase font-sans border-b border-gray-200 whitespace-nowrap relative group ${cIdx > 4 ? "bg-orange-50 font-black" : "bg-[#F8FAFC]"}`}
+                          className={`px-6 py-4 text-[12px] font-bold text-[#002B49] uppercase font-sans border-b border-gray-200 whitespace-nowrap relative group ${activeTab !== "ledger" && cIdx > 4 ? "bg-orange-50 font-black" : "bg-[#F8FAFC]"}`}
                         >
                           {col.label}
                           <div
@@ -1218,7 +1814,28 @@ export default function CreatePostReportDetail({
                     </tr>
                   </thead>
                   <tbody>
-                    {activeTab === "ledger" ? (
+                    {isLoading ? (
+                      <tr>
+                        <td
+                          colSpan={COLUMN_CONFIG.length + (activeTab === "import" ? (showActionColumn ? 3 : 2) : 1)}
+                          className="px-6 py-20 text-center"
+                        >
+                          <div className="flex flex-col items-center gap-3">
+                            <RefreshCcw size={40} className="text-[#00529C] animate-spin" />
+                            <span className="text-gray-500 font-medium italic">Đang tải dữ liệu, vui lòng đợi...</span>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : !isApplied ? (
+                      <tr>
+                        <td
+                          colSpan={COLUMN_CONFIG.length + (activeTab === "import" ? (showActionColumn ? 3 : 2) : 1)}
+                          className="px-6 py-20 text-center text-gray-400 text-[14px]"
+                        >
+                          Vui lòng áp dụng bộ lọc để xem dữ liệu.
+                        </td>
+                      </tr>
+                    ) : activeTab === "ledger" ? (
                       currentTableData.map((row, idx) => (
                         <tr
                           key={row.id}
@@ -1234,7 +1851,7 @@ export default function CreatePostReportDetail({
                             <td
                               key={col.key}
                               style={{ width: columnWidths[col.key] }}
-                              className={`px-6 py-4 text-[12px] text-gray-700 border-b border-gray-50 ${(col.key === "itemName" || col.key === "ps") ? "whitespace-normal break-words leading-relaxed" : "whitespace-nowrap overflow-hidden text-ellipsis"} ${cIdx > 4 ? "bg-orange-50/50" : ""}`}
+                              className={`px-6 py-4 text-[12px] text-gray-700 border-b border-gray-50 ${(col.key === "itemName" || col.key === "ps") ? "whitespace-normal break-words leading-relaxed" : "whitespace-nowrap overflow-hidden text-ellipsis"} ${activeTab !== "ledger" && cIdx > 4 ? "bg-orange-50/50" : ""}`}
                             >
                               {renderCell(row, col.key)}
                             </td>
@@ -1244,64 +1861,64 @@ export default function CreatePostReportDetail({
                     ) : activeTab === "import" ? (
                       hasImportedData ? (
                         currentTableData.map((row) => (
-                          <tr
-                            key={row.id}
-                            className={`group transition-colors ${
-                              showHighlight
-                                ? row.changeType === "add"
-                                  ? "bg-green-50/40 hover:bg-green-100/60"
-                                  : row.changeType === "update"
-                                    ? "bg-orange-50/40 hover:bg-orange-100/60"
-                                    : "bg-red-50/40 hover:bg-red-100/60"
-                                : "bg-white hover:bg-gray-50"
-                            }`}
-                          >
-                            <td
-                              style={{ width: columnWidths.no }}
-                              className={`px-6 py-4 text-[12px] text-gray-700 font-bold italic group-hover:opacity-90 overflow-hidden text-ellipsis whitespace-nowrap ${
-                                showHighlight
-                                  ? row.changeType === "add"
-                                    ? "bg-green-100 border-green-200"
-                                    : row.changeType === "update"
-                                      ? "bg-orange-100 border-orange-200"
-                                      : "bg-red-100 border-red-200"
-                                  : "bg-white border-gray-100 group-hover:bg-gray-50"
-                              }`}
-                            >
-                              {(currentTableData.indexOf(row) + 1).toString().padStart(2, "0")}
-                            </td>
-                            {COLUMN_CONFIG.map((col) => (
-                              <td
-                                key={col.key}
-                                style={{ width: columnWidths[col.key] }}
-                                className={`px-6 py-4 text-[12px] text-gray-700 overflow-hidden ${(col.key === "itemName" || col.key === "ps") ? "whitespace-normal break-words leading-relaxed" : "whitespace-nowrap text-ellipsis"} ${
-                                  showHighlight
-                                    ? row.changeType === "add"
-                                      ? "border-green-100"
-                                      : row.changeType === "update"
-                                        ? "border-orange-100"
-                                        : "border-red-100"
-                                    : "border-gray-50"
-                                }`}
-                              >
-                                {renderCell(row, col.key)}
-                              </td>
-                            ))}
-                            <td className="px-6 py-4 text-[11px] whitespace-nowrap font-bold uppercase">
-                              {row.changeType === "add" ? (
-                                <span className="px-2 py-0.5 rounded-full bg-green-100 text-green-700 border border-green-200">
-                                  ADJUST
-                                </span>
-                              ) : row.changeType === "update" ? (
-                                <span className="px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 border border-orange-200">
-                                  ADJUST
-                                </span>
-                              ) : (
-                                <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-200">
-                                  POST
-                                </span>
-                              )}
-                            </td>
+                           <tr
+                             key={row.id}
+                             className={`group transition-colors ${
+                               showHighlight
+                                 ? row.changeType === "add"
+                                   ? "bg-green-50/40 hover:bg-green-100/60"
+                                   : row.changeType === "update"
+                                     ? "bg-orange-50/40 hover:bg-orange-100/60"
+                                     : "bg-red-50/40 hover:bg-red-100/60"
+                                 : "bg-white hover:bg-gray-50"
+                             }`}
+                           >
+                             <td
+                               style={{ width: columnWidths.no }}
+                               className={`px-6 py-4 text-[12px] text-gray-700 font-bold italic group-hover:opacity-90 overflow-hidden text-ellipsis whitespace-nowrap ${
+                                 showHighlight
+                                   ? row.changeType === "add"
+                                     ? "bg-green-100 border-green-200 border-r"
+                                     : row.changeType === "update"
+                                       ? "bg-orange-100 border-orange-200 border-r"
+                                       : "bg-red-100 border-red-200 border-r"
+                                   : "bg-white border-gray-100 group-hover:bg-gray-50 border-r"
+                               }`}
+                             >
+                               {(currentTableData.indexOf(row) + 1).toString().padStart(2, "0")}
+                             </td>
+                             {COLUMN_CONFIG.map((col) => (
+                               <td
+                                 key={col.key}
+                                 style={{ width: columnWidths[col.key] }}
+                                 className={`px-6 py-4 text-[12px] text-gray-700 overflow-hidden ${(col.key === "itemName" || col.key === "ps") ? "whitespace-normal break-words leading-relaxed" : "whitespace-nowrap text-ellipsis"} ${
+                                   showHighlight
+                                     ? row.changeType === "add"
+                                       ? "border-green-100"
+                                       : row.changeType === "update"
+                                         ? "border-orange-100"
+                                         : "border-red-100"
+                                     : "border-gray-50"
+                                 }`}
+                               >
+                                 {renderCell(row, col.key)}
+                               </td>
+                             ))}
+                             <td className="px-6 py-4 text-[11px] whitespace-nowrap font-bold uppercase">
+                               {row.changeType === "add" ? (
+                                 <span className="px-2 py-0.5 rounded-full bg-green-100 text-green-700 border border-green-200">
+                                   NEW
+                                 </span>
+                               ) : row.changeType === "update" ? (
+                                 <span className="px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 border border-orange-200">
+                                   EDITED
+                                 </span>
+                               ) : (
+                                 <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-200">
+                                   DELAYED
+                                 </span>
+                               )}
+                             </td>
                             {showActionColumn && (
                               <td className="px-6 py-4 text-[12px] whitespace-nowrap sticky right-0 z-10 bg-white group-hover:bg-gray-50 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.1)]">
                                 {row.changeType === "add" &&
