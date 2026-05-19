@@ -67,6 +67,7 @@ interface TableRow {
   cpuBrand: string;
   cpuModel: string;
   osType: string;
+  reportDate: string;
   reportInvoiceDate: string;
   reportInvoiceNumber: string;
   reportQty: string;
@@ -117,20 +118,15 @@ const NEW_COLUMNS: { key: keyof TableRow; label: string }[] = [
   { key: "ps", label: "PS" },
   { key: "uom", label: "Đơn vị tính" },
   { key: "reportQty", label: "Số lượng" },
+  { key: "reportDate", label: "Ngày Báo cáo" },
   { key: "reportInvoiceDate", label: "Ngày hóa đơn" },
   { key: "reportInvoiceNumber", label: "Mã hóa đơn" },
   { key: "reportCustomerId", label: "Mã khách hàng" },
   { key: "reportCustomerName", label: "Tên khách hàng" },
   { key: "billToLocation", label: "Bill To Location" },
   { key: "billToAddress", label: "Bill To Address" },
-  { key: "zipCode", label: "ZIP Code (Bill)" },
-  { key: "city", label: "Tỉnh thành (Bill)" },
-  { key: "country", label: "Quốc gia (Bill)" },
   { key: "shipToLocation", label: "Ship To Location" },
   { key: "shipToAddress", label: "Ship To Address" },
-  { key: "shipToZipCode", label: "ZIP Code (Ship)" },
-  { key: "shipToCity", label: "Tỉnh thành (Ship)" },
-  { key: "shipToCountry", label: "Quốc gia (Ship)" },
   { key: "transactionType", label: "Transaction Type" },
   { key: "serialNumber", label: "Số SN/IMEI" },
 ];
@@ -143,6 +139,7 @@ const LEDGER_COLUMNS: { key: keyof TableRow; label: string }[] = [
   { key: "ps", label: "PS" },
   { key: "uom", label: "Đơn vị tính" },
   { key: "reportQty", label: "Số lượng" },
+  { key: "reportDate", label: "Ngày Báo cáo" },
   { key: "reportInvoiceDate", label: "Ngày hóa đơn" },
   { key: "reportInvoiceNumber", label: "Mã hóa đơn" },
   { key: "reportCustomerId", label: "Mã khách hàng" },
@@ -187,6 +184,7 @@ const mockCommonFields = {
   cpuBrand: "MediaTek",
   cpuModel: "Helio G96",
   osType: "Android",
+  reportDate: "25/03/2026",
   reportInvoiceDate: "25/03/2026",
   reportInvoiceNumber: "167285",
   reportQty: "10",
@@ -301,6 +299,8 @@ export default function CreatePostReportDetail({
     partNumber: [] as string[],
     customer: [] as string[],
     invoiceNumber: "",
+    invoiceDateFrom: "",
+    invoiceDateTo: "",
     warehouseType: "",
     cpuBrand: [] as string[],
     osType: [] as string[],
@@ -316,6 +316,10 @@ export default function CreatePostReportDetail({
     if (!generalFilters.reportType) errors.reportType = "Vui lòng chọn hình thức báo cáo";
     if (!reportDates.startDate) errors.startDate = "Vui lòng chọn ngày bắt đầu";
     if (!reportDates.endDate) errors.endDate = "Vui lòng chọn ngày kết thúc";
+    if (!generalFilters.company || generalFilters.company.length === 0) errors.company = "Vui lòng chọn công ty";
+    if (!generalFilters.brand || generalFilters.brand.length === 0) errors.brand = "Vui lòng chọn hãng";
+    if (!generalFilters.invoiceDateFrom) errors.invoiceDateFrom = "Vui lòng chọn ngày hoá đơn (từ ngày)";
+    if (!generalFilters.invoiceDateTo) errors.invoiceDateTo = "Vui lòng chọn ngày hoá đơn (đến ngày)";
     
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -342,6 +346,7 @@ export default function CreatePostReportDetail({
       return tableData.map((r, idx) => {
         const newRow = { ...r };
         // Generate mock data for invoice fields if they are empty
+        newRow.reportDate = `1${idx + 1}/05/2026`;
         newRow.reportInvoiceDate = `1${idx + 1}/05/2026`;
         newRow.reportInvoiceNumber = `INV-2026-${1000 + idx}`;
         newRow.reportCustomerId = `CUST-${2000 + idx}`;
@@ -371,35 +376,20 @@ export default function CreatePostReportDetail({
 
   const startImportSimulation = (type: "success" | "error") => {
     setImportSimulationState({ status: "uploading", progress: 0 });
-    const interval = setInterval(() => {
-      setImportSimulationState(prev => {
-        if (prev.progress >= 100) {
-          clearInterval(interval);
-          return prev;
-        }
-        return { ...prev, progress: prev.progress + 10 };
-      });
-    }, 200);
-
+    
     setTimeout(() => {
       if (type === "success") {
         setImportSimulationState({ status: "success", progress: 100 });
-        setTimeout(() => {
-          setHasImportedData(true);
-          setDidFreshImport(true);
-          setShowImportFormModal(false);
-          setActiveTab("import");
-          triggerToast("Import dữ liệu thành công!");
-        }, 500);
       } else {
-        setImportSimulationState({ status: "error", progress: 80 });
+        setImportSimulationState({ status: "error", progress: 0 });
       }
-    }, 2500);
+    }, 2000);
   };
   const [tableFilters, setTableFilters] = useState({
     reportCustomerId: "",
     reportCustomerName: "",
     reportTaxId: "",
+    reportDate: "",
     reportInvoiceDate: "",
     reportInvoiceNumber: "",
     ps: "",
@@ -440,6 +430,7 @@ export default function CreatePostReportDetail({
       reportCustomerId: "",
       reportCustomerName: "",
       reportTaxId: "",
+      reportDate: "",
       reportInvoiceDate: "",
       reportInvoiceNumber: "",
       ps: "",
@@ -486,6 +477,11 @@ export default function CreatePostReportDetail({
         (item.reportInvoiceDate || "")
           .toLowerCase()
           .includes(tableFilters.reportInvoiceDate.toLowerCase());
+      const matchesReportDate =
+        !tableFilters.reportDate ||
+        (item.reportDate || "")
+          .toLowerCase()
+          .includes(tableFilters.reportDate.toLowerCase());
       const matchesInvoiceNumber =
         !tableFilters.reportInvoiceNumber ||
         (item.reportInvoiceNumber || "")
@@ -515,6 +511,7 @@ export default function CreatePostReportDetail({
         matchesCustomerId &&
         matchesCustomerName &&
         matchesTaxId &&
+        matchesReportDate &&
         matchesInvoiceDate &&
         matchesInvoiceNumber &&
         matchesPs &&
@@ -755,15 +752,21 @@ export default function CreatePostReportDetail({
       row.originalData &&
       row.originalData[field] !== undefined;
 
-    if (showHighlight && isChanged) {
-      return (
-        <div className="flex flex-col">
-          <span className="text-gray-400 line-through text-[10px] decoration-red-300">
-            {row.originalData![field]}
-          </span>
-          <span className="font-bold text-[#FD7E14]">{String(row[field])}</span>
-        </div>
-      );
+    if (showHighlight) {
+      if (isChanged) {
+        return (
+          <div className="flex flex-col">
+            <span className="text-gray-400 line-through text-[10px] decoration-red-300">
+              {row.originalData![field]}
+            </span>
+            <span className="font-bold text-[#FD7E14]">{String(row[field])}</span>
+          </div>
+        );
+      }
+      if (row.changeType === "add") {
+        return <span className="font-bold text-[#00529C]">{String(row[field])}</span>;
+      }
+      return <span className="font-bold text-[#DC3545]">{String(row[field])}</span>;
     }
     return String(row[field]);
   };
@@ -919,84 +922,92 @@ export default function CreatePostReportDetail({
     );
   };
 
-  const SNPopup = () => (
-    <AnimatePresence>
-      {showSnModal && (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setShowSnModal(false)}
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-          />
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden"
-          >
-            <div className="px-6 py-4 bg-[#F8FAFC] border-b border-gray-100 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-[#00529C]">
-                  <HelpCircle size={20} />
+  const SNPopup = () => {
+    const qty = parseInt(selectedSnRow?.reportQty || "0") || 1;
+    const mockSerials = Array.from({ length: qty }, (_, i) => `SN${selectedSnRow?.id || '000'}${1000 + i}`);
+
+    return (
+      <AnimatePresence>
+        {showSnModal && (
+          <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowSnModal(false)}
+              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
+            >
+              <div className="px-6 py-4 bg-[#F8FAFC] border-b border-gray-100 flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-[#00529C]">
+                    <HelpCircle size={20} />
+                  </div>
+                  <div>
+                    <h3 className="text-[16px] font-bold text-[#002D56] font-sans">Danh sách số SN/IMEI</h3>
+                    <p className="text-[12px] text-gray-500 font-sans">Mã sản phẩm: {selectedSnRow?.itemCode} - Số lượng: {qty}</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-[16px] font-bold text-[#002D56]">Thông tin số SN/IMEI</h3>
-                  <p className="text-[12px] text-gray-500">Mã sản phẩm: {selectedSnRow?.itemCode}</p>
-                </div>
+                <button onClick={() => setShowSnModal(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400">
+                  <X size={20} />
+                </button>
               </div>
-              <button onClick={() => setShowSnModal(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                <X size={20} className="text-gray-400" />
-              </button>
-            </div>
-            
-            <div className="p-6 space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
-                  <span className="text-[12px] text-gray-500 block mb-1">Số SN/IMEI</span>
-                  <span className="text-[14px] font-bold text-[#002D56]">{selectedSnRow?.serialNumber || "N/A"}</span>
+              
+              <div className="p-6 overflow-y-auto">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 mb-6">
+                  <div className="space-y-1">
+                    <span className="text-[12px] text-gray-500 block">Tên sản phẩm</span>
+                    <span className="text-[13px] font-bold text-[#002D56] line-clamp-1">{selectedSnRow?.itemName}</span>
+                  </div>
+                  <div className="space-y-1">
+                    <span className="text-[12px] text-gray-500 block">Mã hóa đơn</span>
+                    <span className="text-[13px] font-bold text-[#002D56]">{selectedSnRow?.reportInvoiceNumber}</span>
+                  </div>
                 </div>
-                <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
-                  <span className="text-[12px] text-gray-500 block mb-1">Mã hóa đơn</span>
-                  <span className="text-[14px] font-bold text-[#002D56]">{selectedSnRow?.reportInvoiceNumber || "N/A"}</span>
+
+                <div className="border border-gray-100 rounded-xl overflow-hidden">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-gray-50 border-b border-gray-100">
+                        <th className="px-4 py-3 text-[12px] font-bold text-[#002D56] w-16">STT</th>
+                        <th className="px-4 py-3 text-[12px] font-bold text-[#002D56]">Số SN/IMEI</th>
+                        <th className="px-4 py-3 text-[12px] font-bold text-[#002D56]">Trạng thái</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50 text-left">
+                      {mockSerials.map((sn, idx) => (
+                        <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
+                          <td className="px-4 py-3 text-[13px] text-gray-500">{idx + 1}</td>
+                          <td className="px-4 py-3 text-[13px] font-medium text-[#002D56] font-mono">{sn}</td>
+                          <td className="px-4 py-3">
+                             <span className="px-2 py-0.5 bg-green-50 text-green-600 text-[11px] font-bold rounded-full border border-green-100">Hợp lệ</span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <h4 className="text-[13px] font-bold text-gray-700 flex items-center gap-2">
-                  <History size={14} className="text-[#00529C]" />
-                  Chi tiết thiết bị
-                </h4>
-                <div className="grid grid-cols-1 gap-2">
-                  {[
-                    { label: "Tên sản phẩm", value: selectedSnRow?.itemName },
-                    { label: "Hãng", value: selectedSnRow?.brand },
-                    { label: "PS", value: selectedSnRow?.ps },
-                    { label: "Đơn vị tính", value: selectedSnRow?.uom },
-                  ].map((item, idx) => (
-                    <div key={idx} className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
-                      <span className="text-[13px] text-gray-500">{item.label}</span>
-                      <span className="text-[13px] font-medium text-gray-900">{item.value}</span>
-                    </div>
-                  ))}
-                </div>
+              <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end shrink-0">
+                <button 
+                  onClick={() => setShowSnModal(false)}
+                  className="px-6 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-[13px] font-bold hover:bg-gray-50 transition-all shadow-sm font-sans"
+                >
+                  Đóng
+                </button>
               </div>
-            </div>
-
-            <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end">
-              <button 
-                onClick={() => setShowSnModal(false)}
-                className="px-6 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-[13px] font-bold hover:bg-gray-50 transition-all shadow-sm"
-              >
-                Đóng
-              </button>
-            </div>
-          </motion.div>
-        </div>
-      )}
-    </AnimatePresence>
-  );
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    );
+  };
 
   const ImportFormPopup = () => (
     <AnimatePresence>
@@ -1009,98 +1020,92 @@ export default function CreatePostReportDetail({
             onClick={() => {
               if (importSimulationState.status !== "uploading") setShowImportFormModal(false);
             }}
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
           />
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative w-full max-w-md bg-white rounded-lg shadow-xl overflow-hidden"
+            className="relative w-full max-w-[800px] bg-white rounded-xl shadow-2xl overflow-hidden"
           >
-            <div className="px-6 py-4 bg-white border-b border-gray-100 flex items-center justify-between">
-              <h3 className="text-[18px] font-bold text-[#002D56]">Import dữ liệu báo cáo</h3>
+            <div className="px-6 py-5 bg-white border-b border-gray-100 flex items-center justify-between">
+              <h2 className="text-[20px] font-bold text-[#002D56] font-sans">Import dữ liệu</h2>
               <button 
                 onClick={() => setShowImportFormModal(false)}
                 disabled={importSimulationState.status === "uploading"}
-                className="p-1 hover:bg-gray-100 rounded-full transition-colors disabled:opacity-30"
+                className="text-gray-400 hover:text-gray-600 transition-colors p-1"
               >
-                <X size={20} className="text-gray-400" />
+                <X size={24} />
               </button>
             </div>
             
-            <div className="p-6">
-              {importSimulationState.status === "idle" || importSimulationState.status === "error" ? (
+            <div className="p-8">
+              {importSimulationState.status === "uploading" ? (
+                <div className="border-2 border-gray-100 rounded-xl bg-gray-50 py-16 flex flex-col items-center justify-center text-center">
+                  <RefreshCcw size={40} className="text-[#00529C] animate-spin mb-4" />
+                  <p className="text-[14px] font-medium text-gray-600 font-sans">Hệ thống đang xử lý dữ liệu, vui lòng đợi trong giây lát...</p>
+                </div>
+              ) : importSimulationState.status === "success" ? (
+                <div className="border-2 border-green-100 rounded-xl bg-green-50 p-8 flex flex-col items-center justify-center text-center">
+                  <CheckCircle2 size={48} className="text-green-500 mb-4" />
+                  <h4 className="text-[18px] font-bold text-green-700 mb-2 font-sans">Import thành công!</h4>
+                  <p className="text-[14px] text-green-600 mb-6">Dữ liệu đã được nạp vào hệ thống và sẵn sàng để đối soát.</p>
+                  <button 
+                    onClick={() => {
+                      setHasImportedData(true);
+                      setDidFreshImport(true);
+                      setShowImportFormModal(false);
+                      setActiveTab("import");
+                      // Reset state for next time
+                      setTimeout(() => setImportSimulationState({ status: "idle", progress: 0 }), 300);
+                    }}
+                    className="px-8 py-2 bg-green-600 text-white rounded-md text-[14px] font-bold hover:bg-green-700 transition-all shadow-md font-sans"
+                  >
+                    Hoàn tất
+                  </button>
+                </div>
+              ) : (
                 <div className="space-y-6">
-                  <div className="flex justify-between items-center bg-blue-50/50 p-4 rounded-lg border border-blue-100/50">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded bg-[#00529C] flex items-center justify-center text-white">
-                        <Download size={20} />
-                      </div>
-                      <div>
-                        <p className="text-[13px] font-bold text-[#002D56]">Tải file mẫu</p>
-                        <p className="text-[11px] text-gray-500">Sử dụng file excel mẫu của hệ thống</p>
+                  <div>
+                    <h3 className="text-[15px] font-bold text-[#002D56] mb-1 font-sans">Tải lên file dữ liệu</h3>
+                    <p className="text-[13px] text-gray-500">Nạp file dữ liệu. Hệ thống sẽ tự động đối soát và map các giao dịch</p>
+                  </div>
+
+                  <div
+                    onClick={() => startImportSimulation("success")}
+                    className="border-2 border-dashed border-gray-200 rounded-xl bg-[#F8FAFC] py-12 flex flex-col items-center justify-center cursor-pointer hover:border-[#00529C] hover:bg-[#F1F5F9] transition-all group"
+                  >
+                    <div className="flex gap-4">
+                      <div className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <FilePlus size={24} className="text-gray-400 group-hover:text-[#00529C]" />
                       </div>
                     </div>
+                    <p className="text-[13px] text-gray-500 font-medium">Bấm để <span className="text-[#00529C] underline">Upload thành công</span></p>
                     <button 
-                      onClick={() => triggerToast("Đang tải file mẫu...")}
-                      className="text-[12px] font-bold text-[#00529C] hover:underline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        startImportSimulation("error");
+                      }}
+                      className="mt-4 text-[11px] text-red-400 hover:underline"
                     >
-                      Bấm để tải về
+                      (Giả lập trường hợp lỗi tại đây)
                     </button>
                   </div>
 
-                  <div className="space-y-3">
-                    <label className="text-[13px] font-bold text-[#002D56]">Chọn file từ máy tính <span className="text-red-500">*</span></label>
-                    <div className="flex flex-col items-center justify-center p-10 border-2 border-dashed border-gray-200 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer relative group">
-                      <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-gray-400 mb-3 border border-gray-100 shadow-sm group-hover:text-[#00529C] transition-colors">
-                        <Upload size={24} />
-                      </div>
-                      <span className="text-[13px] text-gray-600 font-medium">Click hoặc kéo thả file để tải lên</span>
-                      <span className="text-[11px] text-gray-400 mt-1 italic">Hỗ trợ định dạng .xlsx, .xls</span>
-                      <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" />
-                    </div>
-                  </div>
-
                   {importSimulationState.status === "error" && (
-                    <div className="p-3 bg-red-50 border border-red-100 rounded-lg flex items-start gap-2">
-                      <XCircle size={16} className="text-red-500 shrink-0 mt-0.5" />
-                      <p className="text-[12px] text-red-700">Dữ liệu trong file không hợp lệ. Vui lòng kiểm tra lại.</p>
+                    <div className="border-2 border-red-100 rounded-xl bg-red-50 p-6 flex flex-col items-center justify-center text-center">
+                      <X size={40} className="text-red-500 mb-2" />
+                      <h4 className="text-[15px] font-bold text-red-700 mb-1 font-sans">Import thất bại!</h4>
+                      <p className="text-[13px] text-red-600 mb-4">Các sản phẩm trong file không khớp với danh mục của hãng. Vui lòng kiểm tra lại file lỗi.</p>
+                      <button 
+                        onClick={() => triggerToast("Đang tải file log lỗi...")}
+                        className="flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 rounded-md text-[13px] font-bold hover:bg-red-200 font-sans"
+                      >
+                        <Download size={14} />
+                        Tải file lỗi hệ thống
+                      </button>
                     </div>
                   )}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-10 space-y-6">
-                  <div className="relative w-32 h-32">
-                    <svg className="w-full h-full transform -rotate-90">
-                      <circle
-                        cx="64"
-                        cy="64"
-                        r="60"
-                        stroke="currentColor"
-                        strokeWidth="8"
-                        fill="transparent"
-                        className="text-gray-100"
-                      />
-                      <circle
-                        cx="64"
-                        cy="64"
-                        r="60"
-                        stroke="currentColor"
-                        strokeWidth="8"
-                        strokeDasharray={376.99}
-                        strokeDashoffset={376.99 * (1 - importSimulationState.progress / 100)}
-                        fill="transparent"
-                        className="text-[#00529C] transition-all duration-300"
-                      />
-                    </svg>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <span className="text-[24px] font-bold text-[#002D56]">{importSimulationState.progress}%</span>
-                    </div>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-[16px] font-bold text-[#002D56]">Đang tải lên dữ liệu...</p>
-                    <p className="text-[12px] text-gray-500 mt-1">Vui lòng không đóng cửa sổ này</p>
-                  </div>
                 </div>
               )}
             </div>
@@ -1109,23 +1114,16 @@ export default function CreatePostReportDetail({
               <button 
                 onClick={() => setShowImportFormModal(false)}
                 disabled={importSimulationState.status === "uploading"}
-                className="px-6 py-2 border border-gray-300 text-gray-600 rounded text-[13px] font-bold hover:bg-gray-100 transition-all disabled:opacity-50"
+                className="px-6 py-2 border border-[#00529C] text-[#00529C] rounded-md text-[14px] font-bold hover:bg-white transition-all flex items-center gap-2"
               >
-                Bỏ qua
+                Quay lại
               </button>
               <button 
                 onClick={() => startImportSimulation("success")}
                 disabled={importSimulationState.status === "uploading"}
-                className="px-8 py-2 bg-[#00529C] text-white rounded text-[13px] font-bold hover:bg-[#00427D] transition-all shadow-md disabled:bg-gray-400"
+                className={`px-6 py-2 rounded-md text-[14px] font-bold transition-all ${importSimulationState.status === "uploading" ? "bg-gray-300 text-gray-500 cursor-not-allowed" : "bg-[#00529C] text-white hover:bg-[#00427D]"}`}
               >
-                {importSimulationState.status === "uploading" ? (
-                  <div className="flex items-center gap-2">
-                    <Loader2 size={16} className="animate-spin" />
-                    Đang xử lý
-                  </div>
-                ) : (
-                  "Tải lên"
-                )}
+                Upload Dữ liệu
               </button>
             </div>
           </motion.div>
@@ -1280,17 +1278,14 @@ export default function CreatePostReportDetail({
                   label="Công ty"
                   options={MOCK_OPTIONS.companies}
                   selected={generalFilters.company}
-                  onChange={(vals) => setGeneralFilters(prev => ({ ...prev, company: vals }))}
+                  onChange={(vals) => {
+                    setGeneralFilters(prev => ({ ...prev, company: vals }));
+                    if (vals.length > 0) setFormErrors(prev => ({ ...prev, company: "" }));
+                  }}
                   placeholder="Chọn công ty"
+                  required={true}
                 />
-
-                <MultiSelectCustom
-                  label="Trung tâm kinh doanh"
-                  options={MOCK_OPTIONS.businessCenters}
-                  selected={generalFilters.businessCenter}
-                  onChange={(vals) => setGeneralFilters(prev => ({ ...prev, businessCenter: vals }))}
-                  placeholder="Chọn trung tâm kinh doanh"
-                />
+                {formErrors.company && <span className="text-red-500 text-[11px] -mt-1">{formErrors.company}</span>}
 
                 <MultiSelectCustom
                   label="Hãng"
@@ -1298,9 +1293,56 @@ export default function CreatePostReportDetail({
                   selected={generalFilters.brand}
                   onChange={(vals) => {
                     setGeneralFilters(prev => ({ ...prev, brand: vals }));
+                    if (vals.length > 0) setFormErrors(prev => ({ ...prev, brand: "" }));
                   }}
                   placeholder="Chọn hãng"
+                  required={true}
                 />
+                {formErrors.brand && <span className="text-red-500 text-[11px] -mt-1">{formErrors.brand}</span>}
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[13px] font-semibold text-[#4A5568]">
+                    Ngày hoá đơn (từ ngày) <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="date"
+                      value={generalFilters.invoiceDateFrom}
+                      onChange={(e) => {
+                        setGeneralFilters(prev => ({ ...prev, invoiceDateFrom: e.target.value }));
+                        if (e.target.value) setFormErrors(prev => ({ ...prev, invoiceDateFrom: "" }));
+                      }}
+                      className={`w-full px-3 py-1.5 bg-white border ${formErrors.invoiceDateFrom ? "border-red-500" : "border-gray-300"} rounded text-[12px] focus:outline-none focus:ring-1 focus:ring-[#00529C] focus:border-[#00529C] appearance-none`}
+                    />
+                    <Calendar
+                      size={14}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                    />
+                  </div>
+                  {formErrors.invoiceDateFrom && <span className="text-red-500 text-[11px] mt-1">{formErrors.invoiceDateFrom}</span>}
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[13px] font-semibold text-[#4A5568]">
+                    Ngày hoá đơn (đến ngày) <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="date"
+                      value={generalFilters.invoiceDateTo}
+                      onChange={(e) => {
+                        setGeneralFilters(prev => ({ ...prev, invoiceDateTo: e.target.value }));
+                        if (e.target.value) setFormErrors(prev => ({ ...prev, invoiceDateTo: "" }));
+                      }}
+                      className={`w-full px-3 py-1.5 bg-white border ${formErrors.invoiceDateTo ? "border-red-500" : "border-gray-300"} rounded text-[12px] focus:outline-none focus:ring-1 focus:ring-[#00529C] focus:border-[#00529C] appearance-none`}
+                    />
+                    <Calendar
+                      size={14}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                    />
+                  </div>
+                  {formErrors.invoiceDateTo && <span className="text-red-500 text-[11px] mt-1">{formErrors.invoiceDateTo}</span>}
+                </div>
 
                 <MultiSelectCustom
                   label="PS"
@@ -1324,58 +1366,6 @@ export default function CreatePostReportDetail({
                   selected={generalFilters.partNumber}
                   onChange={(vals) => setGeneralFilters(prev => ({ ...prev, partNumber: vals }))}
                   placeholder="Chọn Part Number"
-                />
-
-                <MultiSelectCustom
-                  label="Khách hàng"
-                  options={MOCK_OPTIONS.customers}
-                  selected={generalFilters.customer}
-                  onChange={(vals) => setGeneralFilters(prev => ({ ...prev, customer: vals }))}
-                  placeholder="Chọn khách hàng"
-                />
-
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[13px] font-semibold text-[#4A5568]">Số hoá đơn bán</label>
-                  <input
-                    type="text"
-                    value={generalFilters.invoiceNumber}
-                    placeholder="Nhập số hoá đơn"
-                    onChange={(e) => setGeneralFilters(prev => ({ ...prev, invoiceNumber: e.target.value }))}
-                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-[13px] focus:outline-none focus:ring-1 focus:ring-[#00529C] focus:border-[#00529C]"
-                  />
-                </div>
-
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[13px] font-semibold text-[#4A5568]">Loại Kho</label>
-                  <div className="relative group">
-                    <select
-                      value={generalFilters.warehouseType}
-                      onChange={(e) => setGeneralFilters(prev => ({ ...prev, warehouseType: e.target.value }))}
-                      className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-[13px] focus:outline-none focus:ring-1 focus:ring-[#00529C] focus:border-[#00529C] appearance-none"
-                    >
-                      <option value="">Chọn loại kho</option>
-                      {MOCK_OPTIONS.warehouseTypes.map(opt => (
-                        <option key={opt} value={opt}>{opt}</option>
-                      ))}
-                    </select>
-                    <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none group-focus-within:text-[#00529C]" />
-                  </div>
-                </div>
-
-                <MultiSelectCustom
-                  label="CPU Brand"
-                  options={MOCK_OPTIONS.cpuBrands}
-                  selected={generalFilters.cpuBrand}
-                  onChange={(vals) => setGeneralFilters(prev => ({ ...prev, cpuBrand: vals }))}
-                  placeholder="Chọn CPU Brand"
-                />
-
-                <MultiSelectCustom
-                  label="Loại hệ điều hành"
-                  options={MOCK_OPTIONS.osTypes}
-                  selected={generalFilters.osType}
-                  onChange={(vals) => setGeneralFilters(prev => ({ ...prev, osType: vals }))}
-                  placeholder="Chọn loại HĐH"
                 />
               </div>
 
@@ -1402,6 +1392,8 @@ export default function CreatePostReportDetail({
                       partNumber: [],
                       customer: [],
                       invoiceNumber: "",
+                      invoiceDateFrom: "",
+                      invoiceDateTo: "",
                       warehouseType: "",
                       cpuBrand: [],
                       osType: [],
@@ -1459,12 +1451,6 @@ export default function CreatePostReportDetail({
                   <div className="flex items-center gap-2">
                     <span className="text-[#64748B]">Người tạo đơn</span>
                     <span className="font-bold text-[#334155]">admin</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[#64748B]">Trung tâm kinh doanh</span>
-                    <span className="font-bold text-[#334155]">
-                      FHO Other HN
-                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-[#64748B]">Ngày tạo</span>
@@ -1602,45 +1588,47 @@ export default function CreatePostReportDetail({
                   </button>
                 </div>
 
-                {(activeTab === "import" || activeTab === "summary") &&
-                  hasImportedData && (
-                    <div className="flex items-center gap-3 bg-gray-50 px-4 py-1 rounded-full border border-gray-100 shadow-inner">
-                      <span className="text-[12px] font-semibold text-gray-600 tracking-tight">
-                        Highlight
-                      </span>
-                      <button
-                        onClick={() => setShowHighlight(!showHighlight)}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${showHighlight ? "bg-[#28A745]" : "bg-gray-300"}`}
+                <div className="flex flex-col items-end gap-2">
+                  {(activeTab === "import" || activeTab === "summary") &&
+                    hasImportedData && (
+                      <div className="flex items-center gap-3 bg-gray-50 px-4 py-1 rounded-full border border-gray-100 shadow-inner">
+                        <span className="text-[12px] font-semibold text-gray-600 tracking-tight">
+                          Highlight
+                        </span>
+                        <button
+                          onClick={() => setShowHighlight(!showHighlight)}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${showHighlight ? "bg-[#28A745]" : "bg-gray-300"}`}
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${showHighlight ? "translate-x-6" : "translate-x-1"}`}
+                          />
+                        </button>
+                      </div>
+                    )}
+                  
+                  {activeTab === "import" && (
+                    <div className="flex items-center gap-2">
+                      <button 
+                         onClick={() => triggerToast("Đang chuẩn bị tệp tin export...")}
+                         className="flex items-center gap-2 text-[12px] font-bold px-3 py-1.5 rounded-md transition-all border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 shadow-sm"
                       >
-                        <span
-                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${showHighlight ? "translate-x-6" : "translate-x-1"}`}
-                        />
+                        <Download size={14} />
+                        Export file mẫu
+                      </button>
+                      <button 
+                         onClick={() => setShowImportFormModal(true)}
+                         className="flex items-center gap-2 text-[12px] font-bold px-3 py-1.5 rounded-md transition-all bg-[#00529C] text-white hover:bg-[#00427D] shadow-md"
+                      >
+                        <Upload size={14} />
+                        Import dữ liệu
                       </button>
                     </div>
                   )}
+                </div>
               </div>
 
               {/* Table Filters - Now inside the content area for each tab */}
               <div className="mb-6 space-y-4">
-                {activeTab === "import" && (
-                  <div className="flex items-center gap-2 mb-4">
-                    <button 
-                       onClick={() => triggerToast("Đang chuẩn bị tệp tin export...")}
-                       className="flex items-center gap-2 text-[13px] font-bold px-4 py-2.5 rounded-md transition-all border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 shadow-sm"
-                    >
-                      <Download size={16} />
-                      Export
-                    </button>
-                    <button 
-                       onClick={() => setShowImportFormModal(true)}
-                       className="flex items-center gap-2 text-[13px] font-bold px-4 py-2.5 rounded-md transition-all bg-[#00529C] text-white hover:bg-[#00427D] shadow-md"
-                    >
-                      <Upload size={16} />
-                      Import
-                    </button>
-                  </div>
-                )}
-
                 <div className="flex items-center gap-4">
                   <div className="relative flex-1">
                     <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 pointer-events-none">
@@ -1682,6 +1670,18 @@ export default function CreatePostReportDetail({
                     >
                       <div className="p-4 text-left">
                         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                          <FilterField
+                            label="Report Date"
+                            placeholder="Chọn ngày"
+                            value={tableFilters.reportDate}
+                            onChange={(v: string) =>
+                              setTableFilters({
+                                ...tableFilters,
+                                reportDate: v,
+                              })
+                            }
+                            isDate
+                          />
                           <FilterField
                             label="Invoice Date"
                             placeholder="Chọn ngày"
@@ -1771,6 +1771,24 @@ export default function CreatePostReportDetail({
                   )}
                 </AnimatePresence>
               </div>
+
+              {/* Color Legends */}
+              {activeTab !== "ledger" && (
+                <div className="flex items-center gap-6 mb-4 px-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-[#FD7E14]" />
+                    <span className="text-[12px] text-gray-600 font-medium">Cam - Chỉnh sửa</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-[#DC3545]" />
+                    <span className="text-[12px] text-gray-600 font-medium">Đỏ - Điều chỉnh báo cáo sau</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-[#00529C]" />
+                    <span className="text-[12px] text-gray-600 font-medium">Xanh - Điều chỉnh tách gộp dòng</span>
+                  </div>
+                </div>
+              )}
 
               <div className="overflow-x-auto border border-gray-200 rounded-lg max-h-[600px] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
                 <table className="w-max min-w-full text-left border-separate border-spacing-0 table-fixed">
@@ -1863,26 +1881,18 @@ export default function CreatePostReportDetail({
                         currentTableData.map((row) => (
                            <tr
                              key={row.id}
-                             className={`group transition-colors ${
-                               showHighlight
-                                 ? row.changeType === "add"
-                                   ? "bg-green-50/40 hover:bg-green-100/60"
-                                   : row.changeType === "update"
-                                     ? "bg-orange-50/40 hover:bg-orange-100/60"
-                                     : "bg-red-50/40 hover:bg-red-100/60"
-                                 : "bg-white hover:bg-gray-50"
-                             }`}
+                             className="group bg-white hover:bg-gray-50 transition-colors"
                            >
                              <td
                                style={{ width: columnWidths.no }}
-                               className={`px-6 py-4 text-[12px] text-gray-700 font-bold italic group-hover:opacity-90 overflow-hidden text-ellipsis whitespace-nowrap ${
+                               className={`px-6 py-4 text-[12px] text-gray-700 font-bold italic group-hover:opacity-90 overflow-hidden text-ellipsis whitespace-nowrap border-gray-100 group-hover:bg-gray-50 border-r ${
                                  showHighlight
                                    ? row.changeType === "add"
-                                     ? "bg-green-100 border-green-200 border-r"
+                                     ? "text-[#00529C]"
                                      : row.changeType === "update"
-                                       ? "bg-orange-100 border-orange-200 border-r"
-                                       : "bg-red-100 border-red-200 border-r"
-                                   : "bg-white border-gray-100 group-hover:bg-gray-50 border-r"
+                                       ? "text-[#FD7E14]"
+                                       : "text-[#DC3545]"
+                                   : ""
                                }`}
                              >
                                {(currentTableData.indexOf(row) + 1).toString().padStart(2, "0")}
@@ -1891,31 +1901,23 @@ export default function CreatePostReportDetail({
                                <td
                                  key={col.key}
                                  style={{ width: columnWidths[col.key] }}
-                                 className={`px-6 py-4 text-[12px] text-gray-700 overflow-hidden ${(col.key === "itemName" || col.key === "ps") ? "whitespace-normal break-words leading-relaxed" : "whitespace-nowrap text-ellipsis"} ${
-                                   showHighlight
-                                     ? row.changeType === "add"
-                                       ? "border-green-100"
-                                       : row.changeType === "update"
-                                         ? "border-orange-100"
-                                         : "border-red-100"
-                                     : "border-gray-50"
-                                 }`}
+                                 className={`px-6 py-4 text-[12px] text-gray-700 overflow-hidden ${(col.key === "itemName" || col.key === "ps") ? "whitespace-normal break-words leading-relaxed" : "whitespace-nowrap text-ellipsis"} border-gray-50`}
                                >
                                  {renderCell(row, col.key)}
                                </td>
                              ))}
                              <td className="px-6 py-4 text-[11px] whitespace-nowrap font-bold uppercase">
                                {row.changeType === "add" ? (
-                                 <span className="px-2 py-0.5 rounded-full bg-green-100 text-green-700 border border-green-200">
-                                   NEW
+                                 <span className="px-2 py-0.5 rounded-full bg-blue-50 text-[#00529C] border border-blue-100">
+                                   ĐIỀU CHỈNH TÁCH GỘP DÒNG
                                  </span>
                                ) : row.changeType === "update" ? (
-                                 <span className="px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 border border-orange-200">
-                                   EDITED
+                                 <span className="px-2 py-0.5 rounded-full bg-orange-50 text-[#FD7E14] border border-orange-100">
+                                   CHỈNH SỬA
                                  </span>
                                ) : (
-                                 <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-200">
-                                   DELAYED
+                                 <span className="px-2 py-0.5 rounded-full bg-red-50 text-[#DC3545] border border-red-100">
+                                   ĐIỀU CHỈNH BÁO CÁO SAU
                                  </span>
                                )}
                              </td>
@@ -1959,22 +1961,18 @@ export default function CreatePostReportDetail({
                       currentTableData.map((row) => (
                         <tr
                           key={row.id}
-                          className={`group transition-colors ${
-                            showHighlight && row.changeType === "add"
-                              ? "bg-green-50/40 hover:bg-green-100/60"
-                              : showHighlight && row.changeType === "update"
-                                ? "bg-orange-50/40 hover:bg-orange-100/60"
-                                : "bg-white hover:bg-gray-50"
-                          }`}
+                          className="group bg-white hover:bg-gray-50 transition-colors"
                         >
                           <td
                             style={{ width: columnWidths.no }}
-                            className={`px-6 py-4 text-[12px] text-gray-700 font-medium italic border-b group-hover:opacity-90 overflow-hidden text-ellipsis whitespace-nowrap ${
-                              showHighlight && row.changeType === "add"
-                                ? "bg-green-100 border-green-200 text-green-800"
-                                : showHighlight && row.changeType === "update"
-                                  ? "bg-orange-100 border-orange-200 text-orange-800"
-                                  : "bg-white border-gray-100 group-hover:bg-gray-50"
+                            className={`px-6 py-4 text-[12px] text-gray-700 font-medium italic border-b group-hover:opacity-90 overflow-hidden text-ellipsis whitespace-nowrap bg-white border-gray-100 group-hover:bg-gray-50 ${
+                              showHighlight
+                                ? row.changeType === "add"
+                                  ? "text-[#00529C]"
+                                  : row.changeType === "update"
+                                    ? "text-[#FD7E14]"
+                                    : "text-[#DC3545]"
+                                : ""
                             }`}
                           >
                             {(currentTableData.indexOf(row) + 1).toString().padStart(2, "0")}
@@ -1983,13 +1981,7 @@ export default function CreatePostReportDetail({
                             <td
                               key={col.key}
                               style={{ width: columnWidths[col.key] }}
-                              className={`px-6 py-4 text-[12px] text-gray-700 whitespace-nowrap border-b overflow-hidden text-ellipsis ${
-                                showHighlight && row.changeType === "add"
-                                  ? "border-green-100"
-                                  : showHighlight && row.changeType === "update"
-                                    ? "border-orange-100"
-                                    : "border-gray-50"
-                              }`}
+                              className="px-6 py-4 text-[12px] text-gray-700 whitespace-nowrap border-b overflow-hidden text-ellipsis border-gray-50"
                             >
                               {renderCell(row, col.key)}
                             </td>
