@@ -22,6 +22,8 @@ interface ReportRequest {
   businessCenter: string;
   creator: string;
   status: "confirmed" | "bd_pending" | "pm_pending" | "draft" | "var_pending";
+  invoiceDate: string;
+  createdAt: string;
 }
 
 const statusMap = {
@@ -50,6 +52,8 @@ const mockRequests: ReportRequest[] = [
     businessCenter: "FHO Other HN",
     creator: "Nguyễn Văn A",
     status: "confirmed",
+    invoiceDate: "15/03/2026 - 25/03/2026",
+    createdAt: "10/03/2026",
   },
   {
     id: "2",
@@ -60,6 +64,8 @@ const mockRequests: ReportRequest[] = [
     businessCenter: "FHO Other HCM",
     creator: "Trần Xuân B",
     status: "bd_pending",
+    invoiceDate: "15/04/2026 - 25/04/2026",
+    createdAt: "12/04/2026",
   },
   {
     id: "3",
@@ -70,6 +76,8 @@ const mockRequests: ReportRequest[] = [
     businessCenter: "FHO Other HN",
     creator: "Nguyễn Văn A",
     status: "pm_pending",
+    invoiceDate: "15/05/2025 - 25/05/2025",
+    createdAt: "10/05/2025",
   },
   {
     id: "4",
@@ -80,6 +88,8 @@ const mockRequests: ReportRequest[] = [
     businessCenter: "FHO Other HCM",
     creator: "Trần Xuân B",
     status: "draft",
+    invoiceDate: "15/06/2025 - 25/06/2025",
+    createdAt: "11/06/2025",
   },
   {
     id: "5",
@@ -90,6 +100,8 @@ const mockRequests: ReportRequest[] = [
     businessCenter: "FHO Other HN",
     creator: "Nguyễn Văn A",
     status: "var_pending",
+    invoiceDate: "15/07/2025 - 25/07/2025",
+    createdAt: "10/07/2025",
   },
   {
     id: "6",
@@ -100,6 +112,8 @@ const mockRequests: ReportRequest[] = [
     businessCenter: "FHO Other HCM",
     creator: "Trần Xuân B",
     status: "bd_pending",
+    invoiceDate: "15/08/2025 - 25/08/2025",
+    createdAt: "12/08/2025",
   },
   {
     id: "7",
@@ -110,6 +124,8 @@ const mockRequests: ReportRequest[] = [
     businessCenter: "FHO Other HN",
     creator: "Nguyễn Văn A",
     status: "confirmed",
+    invoiceDate: "15/09/2025 - 25/09/2025",
+    createdAt: "10/09/2025",
   },
   {
     id: "8",
@@ -120,6 +136,8 @@ const mockRequests: ReportRequest[] = [
     businessCenter: "FHO Other HCM",
     creator: "Trần Xuân B",
     status: "bd_pending",
+    invoiceDate: "15/10/2025 - 25/10/2025",
+    createdAt: "11/10/2025",
   },
   {
     id: "9",
@@ -130,6 +148,8 @@ const mockRequests: ReportRequest[] = [
     businessCenter: "FHO Other HN",
     creator: "Nguyễn Văn A",
     status: "confirmed",
+    invoiceDate: "15/11/2025 - 25/11/2025",
+    createdAt: "10/11/2025",
   },
   {
     id: "10",
@@ -140,6 +160,8 @@ const mockRequests: ReportRequest[] = [
     businessCenter: "FHO Other HCM",
     creator: "Trần Xuân B",
     status: "bd_pending",
+    invoiceDate: "15/12/2025 - 25/12/2025",
+    createdAt: "12/12/2025",
   },
 ];
 
@@ -183,6 +205,7 @@ export default function ReportRequestsList({
     setSearchTerm("");
     setFilters({
       code: "",
+      brand: "",
       objective: "",
       creator: "",
       status: "",
@@ -206,11 +229,17 @@ export default function ReportRequestsList({
     return mockRequests.filter((item) => {
       const matchesSearch = item.code
         .toLowerCase()
-        .includes(searchTerm.toLowerCase());
+        .includes(searchTerm.toLowerCase()) ||
+        item.brand.toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchesCode =
         filters.code === "" ||
         item.code.toLowerCase().includes(filters.code.toLowerCase());
+      
+      const matchesBrand =
+        filters.brand === "" ||
+        item.brand.toLowerCase() === filters.brand.toLowerCase();
+
       const matchesObjective =
         filters.objective === "" || item.method === filters.objective;
       const matchesCreator =
@@ -218,12 +247,50 @@ export default function ReportRequestsList({
       const matchesStatus =
         filters.status === "" || item.status === filters.status;
 
+      let matchesStartDate = true;
+      let matchesEndDate = true;
+
+      const parseDateStr = (dateStr: string) => {
+        if (!dateStr) return null;
+        if (dateStr.includes("-")) {
+          return new Date(dateStr);
+        }
+        const parts = dateStr.split("/");
+        if (parts.length === 3) {
+          return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+        }
+        return null;
+      };
+
+      if (filters.startDate) {
+        const filterStart = parseDateStr(filters.startDate);
+        const itemCreated = parseDateStr(item.createdAt);
+        if (filterStart && itemCreated) {
+          filterStart.setHours(0, 0, 0, 0);
+          itemCreated.setHours(0, 0, 0, 0);
+          matchesStartDate = itemCreated >= filterStart;
+        }
+      }
+
+      if (filters.endDate) {
+        const filterEnd = parseDateStr(filters.endDate);
+        const itemCreated = parseDateStr(item.createdAt);
+        if (filterEnd && itemCreated) {
+          filterEnd.setHours(0, 0, 0, 0);
+          itemCreated.setHours(0, 0, 0, 0);
+          matchesEndDate = itemCreated <= filterEnd;
+        }
+      }
+
       return (
         matchesSearch &&
         matchesCode &&
+        matchesBrand &&
         matchesObjective &&
         matchesCreator &&
-        matchesStatus
+        matchesStatus &&
+        matchesStartDate &&
+        matchesEndDate
       );
     });
   }, [searchTerm, filters]);
@@ -372,6 +439,15 @@ export default function ReportRequestsList({
                     />
                   </div>
                   <FilterField
+                    label="Hãng"
+                    placeholder="Chọn hãng"
+                    value={filters.brand}
+                    onChange={(val: string) =>
+                      setFilters({ ...filters, brand: val })
+                    }
+                    options={BRANDS}
+                  />
+                  <FilterField
                     label="Hình thức báo cáo"
                     placeholder="Chọn hình thức báo cáo"
                     value={filters.objective}
@@ -403,7 +479,7 @@ export default function ReportRequestsList({
                   />
                   <div className="grid grid-cols-2 gap-4">
                     <FilterField
-                      label="Từ ngày"
+                      label="Ngày tạo (từ ngày)"
                       placeholder="DD/MM/YYYY"
                       value={filters.startDate}
                       onChange={(val: string) =>
@@ -412,7 +488,7 @@ export default function ReportRequestsList({
                       isDate
                     />
                     <FilterField
-                      label="Đến ngày"
+                      label="Ngày tạo (đến ngày)"
                       placeholder="DD/MM/YYYY"
                       value={filters.endDate}
                       onChange={(val: string) =>
@@ -452,22 +528,25 @@ export default function ReportRequestsList({
                 <th className="px-4 py-4 text-[13px] font-semibold text-[#002D56] w-40 font-sans tracking-tight whitespace-nowrap">
                   Mã đề nghị
                 </th>
-                <th className="px-4 py-4 text-[13px] font-semibold text-[#002D56] w-64 whitespace-nowrap font-sans tracking-tight">
-                  Từ ngày - Đến ngày
-                </th>
-                <th className="px-4 py-4 text-[13px] font-semibold text-[#002D56] font-sans tracking-tight whitespace-nowrap text-nowrap">
-                  Hình thức báo cáo
-                </th>
-                <th className="px-4 py-4 text-[13px] font-semibold text-[#002D56] w-40 font-sans tracking-tight whitespace-nowrap">
+                <th className="px-4 py-4 text-[13px] font-semibold text-[#002D56] w-32 font-sans tracking-tight whitespace-nowrap">
                   Hãng
                 </th>
-                <th className="px-4 py-4 text-[13px] font-semibold text-[#002D56] w-48 font-sans tracking-tight whitespace-nowrap">
-                  Trung tâm kinh doanh
+                <th className="px-4 py-4 text-[13px] font-semibold text-[#002D56] w-44 font-sans tracking-tight whitespace-nowrap">
+                  Hình thức báo cáo
                 </th>
-                <th className="px-4 py-4 text-[13px] font-semibold text-[#002D56] w-56 font-sans tracking-tight whitespace-nowrap">
+                <th className="px-4 py-4 text-[13px] font-semibold text-[#002D56] w-56 whitespace-nowrap font-sans tracking-tight">
+                  Kỳ báo cáo
+                </th>
+                <th className="px-4 py-4 text-[13px] font-semibold text-[#002D56] w-40 font-sans tracking-tight whitespace-nowrap">
+                  Ngày hoá đơn
+                </th>
+                <th className="px-4 py-4 text-[13px] font-semibold text-[#002D56] w-40 font-sans tracking-tight whitespace-nowrap">
+                  Ngày tạo
+                </th>
+                <th className="px-4 py-4 text-[13px] font-semibold text-[#002D56] w-48 font-sans tracking-tight whitespace-nowrap">
                   Người tạo
                 </th>
-                <th className="px-4 py-4 text-[13px] font-semibold text-[#002B49] w-44 font-sans tracking-tight whitespace-nowrap">
+                <th className="px-4 py-4 text-[13px] font-semibold text-[#002B49] w-36 font-sans tracking-tight whitespace-nowrap">
                   Trạng thái
                 </th>
               </tr>
@@ -495,19 +574,22 @@ export default function ReportRequestsList({
                     >
                       {req.code}
                     </td>
-                    <td className="px-4 py-3.5 text-[13px] text-gray-700 font-medium">
-                      {req.period}
-                    </td>
-                    <td className="px-4 py-3.5 text-[13px] text-gray-700 font-medium whitespace-nowrap">
-                      {req.method}
-                    </td>
-                    <td className="px-4 py-3.5 text-[13px] text-gray-700 font-medium">
+                    <td className="px-4 py-3.5 text-[13px]">
                       <span className="px-2 py-0.5 bg-blue-50 text-[#00529C] rounded border border-blue-100 font-bold text-[11px]">
                         {req.brand}
                       </span>
                     </td>
                     <td className="px-4 py-3.5 text-[13px] text-gray-700 font-medium whitespace-nowrap">
-                      {req.businessCenter}
+                      {req.method}
+                    </td>
+                    <td className="px-4 py-3.5 text-[13px] text-gray-700 font-medium whitespace-nowrap">
+                      {req.period}
+                    </td>
+                    <td className="px-4 py-3.5 text-[13px] text-gray-700 font-medium whitespace-nowrap">
+                      {req.invoiceDate}
+                    </td>
+                    <td className="px-4 py-3.5 text-[13px] text-gray-700 font-medium whitespace-nowrap">
+                      {req.createdAt}
                     </td>
                     <td className="px-4 py-3.5 text-[13px] text-gray-700 font-medium">
                       {req.creator}
@@ -524,7 +606,7 @@ export default function ReportRequestsList({
               ) : (
                 <tr>
                   <td
-                    colSpan={8}
+                    colSpan={9}
                     className="px-4 py-10 text-center text-gray-500 text-[14px]"
                   >
                     Không tìm thấy dữ liệu phù hợp
